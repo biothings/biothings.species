@@ -30,7 +30,7 @@ class TaxonomyDataBuilder(DataBuilder):
         for k in keys:
             self.target_backend.target_collection.ensure_index(k)
 
-    def get_metadata(self, sources, job_manager):
+    def get_stats(self, sources, job_manager):
         self.logger.info("Computing metadata...")
         # we want to compute it from scratch
         meta = {"__REPLACE__":True}

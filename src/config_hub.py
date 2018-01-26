@@ -87,6 +87,13 @@ HIPCHAT_CONFIG = {
 # SSH port for hub console
 HUB_SSH_PORT = 8022
 
+################################################################################
+# HUB_PASSWD
+################################################################################
+# The format is a dictionary of 'username': 'cryptedpassword'
+# Generate crypted passwords with 'openssl passwd -crypt'
+HUB_PASSWD = {"guest":"9RKfd8gDuNf0Q"} 
+
 # Temporarily required for biothings update hub (full/incr updates)
 ES_INDEX_NAME = 'taxon_current'
 ES_DOC_TYPE = 'taxon'

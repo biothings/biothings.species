@@ -16,6 +16,9 @@ logging.getLogger("requests").setLevel(logging.ERROR)
 logging.info("Hub DB backend: %s" % biothings.config.HUB_DB_BACKEND)
 logging.info("Hub database: %s" % biothings.config.DATA_HUB_DB_DATABASE)
 
+from biothings.utils.hub import start_server, HubShell
+shell = HubShell()
+
 from biothings.utils.manager import JobManager
 loop = asyncio.get_event_loop()
 jmanager = JobManager(loop,num_workers=config.HUB_MAX_WORKERS,
@@ -35,8 +38,10 @@ from hub.dataindex.indexer import TaxonomyIndexer
 differ_manager = differ.DifferManager(job_manager=jmanager,
         poll_schedule="* * * * * */10")
 differ_manager.configure()
-differ_manager.poll("diff",lambda doc: differ_manager.diff("jsondiff-selfcontained",old=None,new=doc["_id"]))
-differ_manager.poll("release_note",lambda doc: differ_manager.release_note(old=None,new=doc["_id"]))
+differ_manager.poll("diff",lambda doc:
+        shell.launch(partial(differ_manager.diff,"jsondiff-selfcontained",old=None,new=doc["_id"])))
+differ_manager.poll("release_note",lambda doc:
+        shell.launch(partial(differ_manager.release_note,old=None,new=doc["_id"])))
 
 syncer_manager = syncer.SyncerManager(job_manager=jmanager)
 syncer_manager.configure()
@@ -48,7 +53,7 @@ dmanager.schedule_all()
 # will check every 10 seconds for sources to upload
 umanager = uploader.UploaderManager(poll_schedule = '* * * * * */10', job_manager=jmanager)
 umanager.register_sources(hub.dataload.__sources__)
-umanager.poll('upload',lambda doc: umanager.upload_src(doc["_id"]))
+umanager.poll('upload',lambda doc: shell.launch(partial(umanager.upload_src,doc["_id"])))
 
 hasgene = HasGeneMapper(name="has_gene")
 pbuilder = partial(TaxonomyDataBuilder,mappers=[hasgene])
@@ -57,7 +62,7 @@ bmanager = builder.BuilderManager(
         builder_class=pbuilder,
         poll_schedule="* * * * * */10")
 bmanager.configure()
-bmanager.poll("build",lambda conf: bmanager.merge(conf["_id"]))
+bmanager.poll("build",lambda conf: shell.launch(partial(bmanager.merge,conf["_id"])))
 
 pindexer = partial(TaxonomyIndexer,es_host=config.ES_HOST)
 index_manager = indexer.IndexerManager(job_manager=jmanager)
@@ -106,15 +111,11 @@ EXTRA_NS = {
         "done" : done,
         }
 
-passwords = {
-        'guest': '', # guest account with no password
-        }
-
+shell.set_commands(COMMANDS,EXTRA_NS)
 
 from biothings.utils.hub import start_server
-
-ssh_server = start_server(loop, "Species hub",passwords=passwords,
-        port=config.HUB_SSH_PORT,commands=COMMANDS,extra_ns=EXTRA_NS)
+ssh_server = start_server(loop, "Species hub",passwords=config.HUB_PASSWD,
+        port=config.HUB_SSH_PORT,shell=shell)
 
 try:
     loop.run_until_complete(asyncio.wait([ssh_server]))
