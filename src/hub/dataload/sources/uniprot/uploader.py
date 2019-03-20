@@ -14,3 +14,13 @@ class UniprotSpeciesUploader(uploader.BaseSourceUploader):
         self.logger.info("Load data from file '%s'" % nodes_file)
         return parse_uniprot_speclist(open(nodes_file))
 
+    @classmethod
+    def get_mapping(klass):
+        return {
+                "uniprot_name": {
+                    "type": "text"
+                    },
+                "taxid": {
+                    "type": "long"
+                    }
+                }
