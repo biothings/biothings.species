@@ -65,7 +65,7 @@ S3_DIFF_BUCKET = "biothings-diffs"
 # bucket containing release informations
 S3_RELEASE_BUCKET = "biothings-releases"
 # what sub-folder should be used within diff bucket to upload diff files
-S3_APP_FOLDER = "t.biothings.io"
+S3_APP_FOLDER = "biothings.species"
 
 BIOTHINGS_S3_FOLDER = "biothings.species"
 
@@ -150,6 +150,7 @@ HUB_PASSWD = {"guest":"9RKfd8gDuNf0Q"}
 # Role, when master, hub will publish data (updates, snapshot, etc...) that
 # other instances can use (production, standalones)
 BIOTHINGS_ROLE = "slave"
+STANDALONE_VERSION = "standalone_v2"
 
 # key/secret to access AWS S3 (only used when publishing releases, role=master)
 AWS_KEY = ''
