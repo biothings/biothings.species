@@ -8,8 +8,10 @@ DATA_SRC_MASTER_COLLECTION = 'src_master'             # for metadata of each src
 DATA_SRC_DUMP_COLLECTION = 'src_dump'                 # for src data download information
 DATA_SRC_BUILD_COLLECTION = 'src_build'               # for src data build information
 DATA_SRC_BUILD_CONFIG_COLLECTION = 'src_build_config' # for src data build configuration
-
-DATA_TARGET_MASTER_COLLECTION = 'db_master'
+DATA_PLUGIN_COLLECTION = 'data_plugin'     # for data plugins information
+API_COLLECTION = 'api'                     # for api information (running under hub control)
+CMD_COLLECTION = 'cmd'                     # for cmd launched from the hub
+EVENT_COLLECTION = 'event'                 # for event propagation       
 
 # reporting diff results, number of IDs to consider (to avoid too much mem usage)
 MAX_REPORTED_IDS = 1000
@@ -64,12 +66,37 @@ S3_RELEASE_BUCKET = "biothings-releases"
 # what sub-folder should be used within diff bucket to upload diff files
 S3_APP_FOLDER = "t.biothings.io"
 
+BIOTHINGS_S3_FOLDER = "biothings.species"
+
+# Pre-prod/test ES definitions
+ES_CONFIG = {
+        #"build_config_key" : None, # used to select proper idxr/syncer
+        "indexer_select": {
+            # default
+            #None : "path.to.special.Indexer",
+            },  
+        "env" : {   
+            "prod" : {
+                "host" : "localhost:9200",
+                "indexer" : {
+                    "args" : {
+                        "timeout" : 300,
+                        "retry_on_timeout" : True,
+                        "max_retries" : 10,
+                        },
+                    },
+                "index" : [],
+                }                                                                                                                                                                                    
+            },
+        }
+
 
 
 # default logger for the hub
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging
+from biothings.utils.loggers import setup_default_log  
 
 # If you need notifications to hipchat, fill with "token",
 # "roomid" and "from" keys to broadcast m#essage to a Hipchat room.
@@ -85,7 +112,14 @@ HIPCHAT_CONFIG = {
         }    
 
 # SSH port for hub console
-HUB_SSH_PORT = 8022
+HUB_SSH_PORT = 12022
+HUB_API_PORT = 12080
+
+# Hub name/icon url/version, for display purpose
+HUB_NAME = "MyTaxonomy (frontend)"
+HUB_ICON = "https://raw.githubusercontent.com/biothings/biothings_sites/master/biothings-theme/static/img/biothings-logo-md.png"
+HUB_VERSION = "master"
+
 
 ################################################################################
 # HUB_PASSWD
