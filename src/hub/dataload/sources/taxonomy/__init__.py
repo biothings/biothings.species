@@ -1,3 +1,4 @@
 from .dumper import TaxonomyDumper
 
-from .uploader import TaxonomyNodesUploader, TaxonomyNamesUploader
+from .uploader2 import TaxonomyNodesUploader
+from .uploader import TaxonomyNamesUploader

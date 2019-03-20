@@ -19,7 +19,7 @@ MAX_REPORTED_IDS = 1000
 MAX_RANDOMLY_PICKED = 10
 
 # where to store info about processes launched by the hub
-RUN_DIR = '/tmp/run'
+RUN_DIR = './run'
 
 # Max queued jobs in job manager
 # this shouldn't be 0 to make sure a job is pending and ready to be processed
@@ -29,6 +29,7 @@ MAX_QUEUED_JOBS = os.cpu_count() * 4
 
 # Max number of *processes* hub can access to run jobs
 HUB_MAX_WORKERS = int(os.cpu_count() / 4)
+MAX_SYNC_WORKERS = HUB_MAX_WORKERS
 
 # Max memory usage before hub will prevent creating more jobs, in byte
 # If None, no limit. It's a good practice to put a limit as the more processes
@@ -98,28 +99,46 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging
 from biothings.utils.loggers import setup_default_log  
 
-# If you need notifications to hipchat, fill with "token",
-# "roomid" and "from" keys to broadcast m#essage to a Hipchat room.
-# 'host' is a hipchat's subdomain, and 'usertoken' is a valid user
-# (real user) token, used to attach file to messages (hipchat requires
-# a real user to do that...)
-HIPCHAT_CONFIG = {
-        #    'token': 'abdce',
-        #    'roomid': 123456,
-        #    'from': 'hub',
-        #    'host' : 'xxxx.hipchat.com',
-        #    'usertoken' : 'abcdefghijkl'
-        }    
+SLACK_WEBHOOK = None
 
-# SSH port for hub console
-HUB_SSH_PORT = 12022
-HUB_API_PORT = 12080
+# SSH and API ports
+HUB_SSH_PORT = 7022
+HUB_API_PORT = 7080
 
-# Hub name/icon url/version, for display purpose
-HUB_NAME = "MyTaxonomy (frontend)"
+HUB_NAME = "MyTaxonomy (backend)"
 HUB_ICON = "https://raw.githubusercontent.com/biothings/biothings_sites/master/biothings-theme/static/img/biothings-logo-md.png"
-HUB_VERSION = "master"
 
+### Pre-prod/test ES definitions
+ES_CONFIG = {
+		"indexer_select": {
+			# default
+			None : "hub.dataindex.indexer.TaxonomyIndexer",
+			},
+		"env" : {
+			"prod" : {
+				"host" : "prodserver:9200",
+				"indexer" : {
+					"args" : {
+						"timeout" : 300,
+						"retry_on_timeout" : True,
+						"max_retries" : 10,
+						},
+					},
+				"index" : [{"index": "genedoc_mygene_allspecies_current", "doc_type": "gene"}]
+				},
+			"test" : {
+				"host" : "localhost:9200",
+				"indexer" : {
+					"args" : {
+						"timeout" : 300,
+						"retry_on_timeout" : True,
+						"max_retries" : 10,
+						},
+					},
+				"index" : [{"index": "mygene_gene_allspecies_current", "doc_type": "gene"}]
+				},
+			},
+		}
 
 ################################################################################
 # HUB_PASSWD
@@ -128,14 +147,6 @@ HUB_VERSION = "master"
 # Generate crypted passwords with 'openssl passwd -crypt'
 HUB_PASSWD = {"guest":"9RKfd8gDuNf0Q"} 
 
-# Temporarily required for biothings update hub (full/incr updates)
-ES_INDEX_NAME = 'taxon_current'
-ES_DOC_TYPE = 'taxon'
-# used to directly index documents (usually the prod)
-ES_HOST = 'localhost:9200'
-# used to create snapshot internally before deploying to prod
-ES_SNAPSHOT_HOST = 'localhost:9200'
-
 # Role, when master, hub will publish data (updates, snapshot, etc...) that
 # other instances can use (production, standalones)
 BIOTHINGS_ROLE = "slave"
@@ -143,6 +154,7 @@ BIOTHINGS_ROLE = "slave"
 # key/secret to access AWS S3 (only used when publishing releases, role=master)
 AWS_KEY = ''
 AWS_SECRET = ''
+
 
 ########################################
 # APP-SPECIFIC CONFIGURATION VARIABLES #
@@ -156,9 +168,8 @@ AWS_SECRET = ''
 # then define the following variables to fit your needs. You can also override any
 # any other variables in this file as required. Variables defined as ValueError() exceptions
 # *must* be defined
-#
-from biothings import ConfigurationError
-# To be defined at application-level:
+
+from biothings import ConfigurationError, ConfigurationDefault, ConfigurationValue
 
 # Individual source database connection
 DATA_SRC_SERVER = ConfigurationError("Define hostname for source database")
@@ -179,7 +190,7 @@ HUB_DB_BACKEND = ConfigurationError("Define Hub DB connection")
 # For now, other options are: mongodb, sqlite3, elasticsearch
 #HUB_DB_BACKEND = {
 #        "module" : "biothings.utils.sqlite3",
-#        "sqlite_db_folder" : "./db",
+#        "sqlite_db_foder" : "./db",
 #        }
 #HUB_DB_BACKEND = {
 #        "module" : "biothings.utils.mongo",
@@ -193,19 +204,34 @@ HUB_DB_BACKEND = ConfigurationError("Define Hub DB connection")
 
 # Path to a folder to store all downloaded files, logs, caches, etc...
 DATA_ARCHIVE_ROOT = ConfigurationError("Define path to folder which will contain all downloaded data, cache files, etc...")
-# this dir must be created manually
-LOG_FOLDER = ConfigurationError("Define path to folder which will contain log files")
-# Usually inside DATA_ARCHIVE_ROOT
-#LOG_FOLDER = os.path.join(DATA_ARCHIVE_ROOT,'logs')
+
+# Path to a folder to store all 3rd party parsers, dumpers, etc...
+DATA_PLUGIN_FOLDER = ConfigurationDefault(
+        default="./plugins",
+        desc="Define path to folder which will contain all 3rd party parsers, dumpers, etc...")
 
 # Path to folder containing diff files
-DIFF_PATH = ConfigurationError("Define path to folder which will contain output files from diff")
+DIFF_PATH = ConfigurationDefault(
+        default=ConfigurationValue("""os.path.join(DATA_ARCHIVE_ROOT,"diff")"""),
+        desc="Define path to folder which will contain output files from diff")
 # Usually inside DATA_ARCHIVE_ROOT
 #DIFF_PATH = os.path.join(DATA_ARCHIVE_ROOT,"diff")
 
 # Path to folder containing release note files
-RELEASE_PATH = ConfigurationError("Define path to folder which will contain release files")
-# Usually inside DATA_ARCHIVE_ROOT                                                                                                                                                                                                     
-#RELEASE_PATH = os.path.join(DATA_ARCHIVE_ROOT,"release")
+RELEASE_PATH = ConfigurationDefault(
+        default=ConfigurationValue("""os.path.join(DATA_ARCHIVE_ROOT,"release")"""),
+        desc="Define path to folder which will contain release files")
 
+# this dir must be created manually
+LOG_FOLDER = ConfigurationDefault(
+        default=ConfigurationValue("""os.path.join(DATA_ARCHIVE_ROOT,"logs")"""),
+        desc="Define path to folder which will contain log files")
+# Usually inside DATA_ARCHIVE_ROOT
+#LOG_FOLDER = os.path.join(DATA_ARCHIVE_ROOT,'logs')
+
+# default hub logger
+from biothings.utils.loggers import setup_default_log
+logger = ConfigurationDefault(
+        default=logging,
+        desc="Provide a default hub logger instance (use setup_default_log(name,log_folder)")
 
