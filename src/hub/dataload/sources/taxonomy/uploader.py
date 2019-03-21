@@ -36,6 +36,12 @@ class TaxonomyNamesUploader(uploader.BaseSourceUploader):
     name = "names"
     __metadata__ = {
             "mapper" : 'has_gene',
+            }
+
+    def load_data(self,data_folder):
+        names_file = os.path.join(data_folder,"names.dmp")
+        self.logger.info("Load data from file '%s'" % names_file)
+        return parse_refseq_names(open(names_file))
 
     @classmethod
     def get_mapping(klass):

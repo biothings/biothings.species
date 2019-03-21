@@ -105,7 +105,7 @@ SLACK_WEBHOOK = None
 HUB_SSH_PORT = 7022
 HUB_API_PORT = 7080
 
-HUB_NAME = "MyTaxonomy (backend)"
+HUB_NAME = "MyTaxonomy"
 HUB_ICON = "https://raw.githubusercontent.com/biothings/biothings_sites/master/biothings-theme/static/img/biothings-logo-md.png"
 
 ### Pre-prod/test ES definitions

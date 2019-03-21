@@ -70,7 +70,7 @@ class MyTaxonomyHubServer(HubServer):
 
 import hub.dataload
 # pass explicit list of datasources (no auto-discovery)
-server = MyTaxonomyHubServer(hub.dataload.__sources__,name="t.biothings.io")
+server = MyTaxonomyHubServer(hub.dataload.__sources__,name=config.HUB_NAME)
 
 if __name__ == "__main__":
     server.start()
