@@ -59,8 +59,6 @@ GA_ACTION_ANNOTATION_GET = 'species_get'
 GA_ACTION_ANNOTATION_POST = 'species_post'
 GA_TRACKER_URL = 't.biothings.io'
 
-HIPCHAT_MESSAGE_COLOR = 'purple'
-
 STATUS_CHECK = {
     'id': '9606',
     'index': 'taxonomy',
