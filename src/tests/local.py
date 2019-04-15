@@ -3,11 +3,11 @@
 from nose.core import run
 
 from biothings.tests import TornadoTestServerMixin
-from tests.remote import MySpeciesTest
+from tests.remote import MyTaxonomyTest
 from web.settings import MySpeciesWebSettings
 
 
-class MySpeciesLocalTest(TornadoTestServerMixin, MySpeciesTest):
+class MyTaxonomyLocalTest(TornadoTestServerMixin, MyTaxonomyTest):
     '''
         Starts a Tornado server on its own and perform tests against this server.
         Requires config.py under src folder.
@@ -21,8 +21,8 @@ class MySpeciesLocalTest(TornadoTestServerMixin, MySpeciesTest):
 
 if __name__ == '__main__':
     print()
-    print('MyGene Local Test')
+    print('MyTaxonomy Local Test')
     print('-'*70)
     print()
     run(argv=['', '--logging-level=INFO', '-v', '--logging-clear-handlers'],
-        defaultTest='__main__.MySpeciesLocalTest')
+        defaultTest='__main__.MyTaxonomyLocalTest')
