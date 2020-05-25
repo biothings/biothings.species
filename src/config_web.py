@@ -4,7 +4,7 @@
 # elasticsearch server transport url
 ES_HOST = 'localhost:9200'
 # elasticsearch index name
-ES_INDEX = 'taxonomy'
+ES_INDEX = 'mytaxonomy_current'
 # elasticsearch document type
 ES_DOC_TYPE = 'taxon'
 
