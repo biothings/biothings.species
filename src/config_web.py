@@ -1,18 +1,42 @@
+"""
+    MyTaxon
+    http://t.biothings.io/
+"""
+
+from copy import deepcopy
+
+from biothings.web.settings.default import ANNOTATION_KWARGS, QUERY_KWARGS, APP_LIST
+
 # *****************************************************************************
 # Elasticsearch variables
 # *****************************************************************************
 # elasticsearch server transport url
-ES_HOST = 'localhost:9200'
+ES_HOST = 'es6.biothings.io:9200'
 # elasticsearch index name
 ES_INDEX = 'mytaxonomy_current'
 # elasticsearch document type
 ES_DOC_TYPE = 'taxon'
 
 # *****************************************************************************
-# Query Pipeline
+# Web Application
 # *****************************************************************************
-# ES_RESULT_TRANSFORMER = ESResultTransformer #TODO
+APP_LIST = list(APP_LIST)
+APP_LIST.append((r"/{pre}/{ver}/{typ}/?", 'web.handlers.MytaxonHandler'))
 
+ES_QUERY_BUILDER = 'web.pipeline.MytaxonQueryBuilder'
+ES_QUERY_BACKEND = 'web.pipeline.MytaxonQueryBackend'
+ES_RESULT_TRANSFORM = "web.pipeline.MytaxonTransform"
+
+TYPEDEF = {'type': bool, 'default': False, 'group':['es']}
+
+ANNOTATION_KWARGS = deepcopy(ANNOTATION_KWARGS)
+ANNOTATION_KWARGS['*']['include_children'] = TYPEDEF
+ANNOTATION_KWARGS['POST']['expand_species'] = TYPEDEF
+ANNOTATION_KWARGS['*']['has_gene'] = TYPEDEF
+
+QUERY_KWARGS = deepcopy(QUERY_KWARGS)
+QUERY_KWARGS['*']['include_children'] = TYPEDEF
+QUERY_KWARGS['*']['has_gene'] = TYPEDEF
 
 # *****************************************************************************
 # Analytics
@@ -29,15 +53,4 @@ STATUS_CHECK = {
     'doc_type': 'taxon'
 }
 
-# KWARGS for taxon API TODO
-# DEFAULT_FALSE_BOOL_TYPEDEF = {'default': False, 'type': bool}
-# ANNOTATION_GET_TRANSFORM_KWARGS.update({'include_children': DEFAULT_FALSE_BOOL_TYPEDEF, 
-#                                         'has_gene': DEFAULT_FALSE_BOOL_TYPEDEF})
-# ANNOTATION_POST_TRANSFORM_KWARGS.update({'include_children': DEFAULT_FALSE_BOOL_TYPEDEF,
-#                                         'has_gene': DEFAULT_FALSE_BOOL_TYPEDEF,
-#                                         'expand_species': DEFAULT_FALSE_BOOL_TYPEDEF})
-# QUERY_GET_TRANSFORM_KWARGS.update({'include_children': DEFAULT_FALSE_BOOL_TYPEDEF,
-#                                     'has_gene': DEFAULT_FALSE_BOOL_TYPEDEF})
-# QUERY_POST_TRANSFORM_KWARGS.update({'include_children': DEFAULT_FALSE_BOOL_TYPEDEF,
-#                                     'has_gene': DEFAULT_FALSE_BOOL_TYPEDEF})
 
