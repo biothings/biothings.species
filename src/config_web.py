@@ -27,16 +27,20 @@ ES_QUERY_BUILDER = 'web.pipeline.MytaxonQueryBuilder'
 ES_QUERY_BACKEND = 'web.pipeline.MytaxonQueryBackend'
 ES_RESULT_TRANSFORM = "web.pipeline.MytaxonTransform"
 
-TYPEDEF = {'type': bool, 'default': False, 'group':['es']}
+TYPEDEF = {'type': bool, 'default': False, 'group': ['es']}
 
-ANNOTATION_KWARGS = deepcopy(ANNOTATION_KWARGS)
-ANNOTATION_KWARGS['*']['include_children'] = TYPEDEF
-ANNOTATION_KWARGS['POST']['expand_species'] = TYPEDEF
-ANNOTATION_KWARGS['*']['has_gene'] = TYPEDEF
+ANNOTATION_KWARGS['*']['include_children'] = {
+    'type': bool, 'default': False, 'group': ['es']}
+ANNOTATION_KWARGS['POST']['expand_species'] = {
+    'type': bool, 'default': False, 'group': ['es'], 'alias': ['expand_taxon']}
+ANNOTATION_KWARGS['*']['has_gene'] = {
+    'type': bool, 'default': False, 'group': ['es'], 'alias': ['children_has_gene']}
 
 QUERY_KWARGS = deepcopy(QUERY_KWARGS)
-QUERY_KWARGS['*']['include_children'] = TYPEDEF
-QUERY_KWARGS['*']['has_gene'] = TYPEDEF
+QUERY_KWARGS['*']['include_children'] = {
+    'type': bool, 'default': False, 'group': ['es']}
+QUERY_KWARGS['*']['has_gene'] = {
+    'type': bool, 'default': False, 'group': ['es'], 'alias': ['children_has_gene']}
 
 # *****************************************************************************
 # Analytics
@@ -52,5 +56,4 @@ STATUS_CHECK = {
     'index': 'taxonomy',
     'doc_type': 'taxon'
 }
-
 
