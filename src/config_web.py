@@ -53,7 +53,7 @@ GA_TRACKER_URL = 't.biothings.io'
 
 STATUS_CHECK = {
     'id': '9606',
-    'index': 'taxonomy',
+    'index': 'mytaxonomy_current',
     'doc_type': 'taxon'
 }
 
