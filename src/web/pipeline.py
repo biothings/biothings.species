@@ -1,40 +1,61 @@
 
 from biothings.utils.common import dotdict
-from biothings.utils.web.es_dsl import AsyncSearch
-from biothings.web.pipeline import (ESQueryBackend, ESQueryBuilder,
-                                    ESResultTransform)
+from biothings.web.query import (
+    AsyncESQueryPipeline,
+    ESQueryBuilder,
+    AsyncESQueryBackend,
+    ESResultFormatter)
+from biothings.web.query.engine import RawResultInterrupt
+from elasticsearch_dsl import Search
+
+"""
+Potential Test Cases
+/v1/query?q=207598&include_children
+/v1/query?q=207598&include_children&has_gene
+/v1/taxon/9592?fields=has_gene
+POST /v1/taxon?expand_species 
+ids=207598
+POST /v1/taxon?expand_species
+ids=207598
+has_gene=1
+"""
 
 
 class MytaxonQueryBuilder(ESQueryBuilder):
-    
+
     @staticmethod
     def build_lineage_query(_id, options):
 
-        search = AsyncSearch()
+        search = Search()
         search = search.query('match', lineage=_id)
-        if options.has_gene:
-            search = search.query('match', has_gene=options.has_gene)
 
-        max_taxid_count = 10000
-        search = search.params(size=max_taxid_count)
+        if options.get('has_gene'):
+            search = search.query('match', has_gene=options['has_gene'])
+
+        search = search.params(size=10000)
         search = search.params(_source='_id')
-        
+
         return search
 
 
-class MytaxonQueryBackend(ESQueryBackend):
+class MytaxonQueryBackend(AsyncESQueryBackend):
 
-    async def execute(self, query, options):
+    async def execute(self, query, **options):
 
-        res = await super().execute(query, options)
+        raw = options.pop('raw', False)
+        res = await super().execute(query, **options)
 
         # optionally add a children field
-        if options.include_children:
+        if options.get('include_children') or \
+                options.get('expand_species'):
             await self.include_children(res, options)
+
+        if raw:  # relocated from previous execute()
+            raise RawResultInterrupt(res)
 
         return res
 
-    async def include_children(self, res, options): # modify in-place
+    async def include_children(self, res, options):  # modify in-place
         """
         Make additional queries to get the children field content.
         """
@@ -44,21 +65,21 @@ class MytaxonQueryBackend(ESQueryBackend):
             for search in res:
                 await self.include_children(search, options)
             return
-                
-        try: # single query
+
+        try:  # single query
             for hit in res['hits']['hits']:
                 query = MytaxonQueryBuilder.build_lineage_query(hit['_id'], options)
-                hit['children'] = await super().execute(query, dotdict())
+                hit['children'] = await super().execute(query)
         except KeyError:
             pass
 
 
-class MytaxonTransform(ESResultTransform):
+class MytaxonTransform(ESResultFormatter):
 
     def transform_hit(self, path, doc, options):
 
         super().transform_hit(path, doc, options)
-        
+
         # children field in top level
         if path == '' and 'children' in doc:
 
@@ -67,15 +88,15 @@ class MytaxonTransform(ESResultTransform):
             children = (int(hit['_id']) for hit in hits if hit['_id'] != doc['_id'])
             doc['children'] = sorted(children)
 
-        return
-        
-    @staticmethod
-    def option_sorted(path, obj):
-        """
-        Sort a container in-place.
-        """
-        if path == 'lineage':
-            return # do not sort this field
 
-        # delegate to super class for normal cases
-        ESResultTransform.option_sorted(path, obj)
+class MytaxonQueryPipeline(AsyncESQueryPipeline):
+
+    async def fetch(self, id, **options):
+        res = await super().fetch(id, **options)
+        if options.get('expand_species') and isinstance(res, list):
+            ids = set()
+            for _res in res:
+                ids.add(int(_res['_id']))
+                ids.update(_res['children'])
+            return list(ids)
+        return res

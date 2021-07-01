@@ -5,42 +5,37 @@
 
 from copy import deepcopy
 
-from biothings.web.settings.default import ANNOTATION_KWARGS, QUERY_KWARGS, APP_LIST
+from biothings.web.settings.default import ANNOTATION_KWARGS, QUERY_KWARGS
 
 # *****************************************************************************
 # Elasticsearch variables
 # *****************************************************************************
-# elasticsearch server transport url
-ES_HOST = 'es6.biothings.io:9200'
-# elasticsearch index name
-ES_INDEX = 'mytaxonomy_current'
-# elasticsearch document type
-ES_DOC_TYPE = 'taxon'
+ES_HOST = 'es7.biothings.io:443'
+ES_ARGS = dict(aws=True)
+ES_INDICES = dict(taxon='mytaxon_current')
 
 # *****************************************************************************
 # Web Application
 # *****************************************************************************
-APP_LIST = list(APP_LIST)
-APP_LIST.append((r"/{pre}/{ver}/{typ}/?", 'web.handlers.MytaxonHandler'))
-
+ES_QUERY_PIPELINE = 'web.pipeline.MytaxonQueryPipeline'
 ES_QUERY_BUILDER = 'web.pipeline.MytaxonQueryBuilder'
 ES_QUERY_BACKEND = 'web.pipeline.MytaxonQueryBackend'
 ES_RESULT_TRANSFORM = "web.pipeline.MytaxonTransform"
 
-TYPEDEF = {'type': bool, 'default': False, 'group': ['es']}
+ALLOW_RANDOM_QUERY = True
 
 ANNOTATION_KWARGS['*']['include_children'] = {
-    'type': bool, 'default': False, 'group': ['es']}
+    'type': bool, 'default': False}
 ANNOTATION_KWARGS['POST']['expand_species'] = {
-    'type': bool, 'default': False, 'group': ['es'], 'alias': ['expand_taxon']}
+    'type': bool, 'default': False, 'alias': ['expand_taxon']}
 ANNOTATION_KWARGS['*']['has_gene'] = {
-    'type': bool, 'default': False, 'group': ['es'], 'alias': ['children_has_gene']}
+    'type': bool, 'default': False, 'alias': ['children_has_gene']}
 
 QUERY_KWARGS = deepcopy(QUERY_KWARGS)
 QUERY_KWARGS['*']['include_children'] = {
-    'type': bool, 'default': False, 'group': ['es']}
+    'type': bool, 'default': False}
 QUERY_KWARGS['*']['has_gene'] = {
-    'type': bool, 'default': False, 'group': ['es'], 'alias': ['children_has_gene']}
+    'type': bool, 'default': False, 'alias': ['children_has_gene']}
 
 # *****************************************************************************
 # Analytics
@@ -53,7 +48,5 @@ GA_TRACKER_URL = 't.biothings.io'
 
 STATUS_CHECK = {
     'id': '9606',
-    'index': 'mytaxonomy_current',
-    'doc_type': 'taxon'
+    'index': 'mytaxon_current'
 }
-
