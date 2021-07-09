@@ -170,7 +170,8 @@ AWS_SECRET = ''
 # any other variables in this file as required. Variables defined as ValueError() exceptions
 # *must* be defined
 
-from biothings import ConfigurationError, ConfigurationDefault, ConfigurationValue
+from biothings.utils.configuration import \
+	ConfigurationError, ConfigurationDefault, ConfigurationValue
 
 # Individual source database connection
 DATA_SRC_SERVER = ConfigurationError("Define hostname for source database")
