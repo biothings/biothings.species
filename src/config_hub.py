@@ -2,6 +2,11 @@
 # HUB VARS  #
 #############
 import os
+# default logger for the hub
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging
+
 
 DATA_HUB_DB_DATABASE = "taxonomy_hubdb"               # db containing the following (internal use)
 DATA_SRC_MASTER_COLLECTION = 'src_master'             # for metadata of each src collections
@@ -69,35 +74,8 @@ S3_APP_FOLDER = "biothings.species"
 
 BIOTHINGS_S3_FOLDER = "biothings.species"
 
-# Pre-prod/test ES definitions
-ES_CONFIG = {
-        #"build_config_key" : None, # used to select proper idxr/syncer
-        "indexer_select": {
-            # default
-            #None : "path.to.special.Indexer",
-            },  
-        "env" : {   
-            "prod" : {
-                "host" : "localhost:9200",
-                "indexer" : {
-                    "args" : {
-                        "timeout" : 300,
-                        "retry_on_timeout" : True,
-                        "max_retries" : 10,
-                        },
-                    },
-                "index" : [],
-                }                                                                                                                                                                                    
-            },
-        }
 
 
-
-# default logger for the hub
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging
-from biothings.utils.loggers import setup_default_log  
 
 SLACK_WEBHOOK = None
 
@@ -109,7 +87,7 @@ HUB_NAME = "MyTaxonomy"
 HUB_ICON = "https://raw.githubusercontent.com/biothings/biothings_sites/master/biothings-theme/static/img/biothings-logo-md.png"
 
 ### Pre-prod/test ES definitions
-ES_CONFIG = {
+INDEX_CONFIG = {
 		"indexer_select": {
 			# default
 			None : "hub.dataindex.indexer.TaxonomyIndexer",
