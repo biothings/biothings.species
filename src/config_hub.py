@@ -65,17 +65,6 @@ SNAPSHOT_REPOSITORY = "taxon_repository"
 # used access controller to write data, and the second is read-only
 READONLY_SNAPSHOT_REPOSITORY ="taxonomy_url"
 
-# bucket/folder containing releases
-S3_DIFF_BUCKET = "biothings-diffs"
-# bucket containing release informations
-S3_RELEASE_BUCKET = "biothings-releases"
-# what sub-folder should be used within diff bucket to upload diff files
-S3_APP_FOLDER = "biothings.species"
-
-BIOTHINGS_S3_FOLDER = "biothings.species"
-
-
-
 
 SLACK_WEBHOOK = None
 
@@ -88,35 +77,134 @@ HUB_ICON = "https://raw.githubusercontent.com/biothings/biothings_sites/master/b
 
 ### Pre-prod/test ES definitions
 INDEX_CONFIG = {
-		"indexer_select": {
-			# default
-			None : "hub.dataindex.indexer.TaxonomyIndexer",
-			},
-		"env" : {
-			"prod" : {
-				"host" : "prodserver:9200",
-				"indexer" : {
-					"args" : {
-						"timeout" : 300,
-						"retry_on_timeout" : True,
-						"max_retries" : 10,
-						},
-					},
-				"index" : [{"index": "genedoc_mygene_allspecies_current", "doc_type": "gene"}]
-				},
-			"test" : {
-				"host" : "localhost:9200",
-				"indexer" : {
-					"args" : {
-						"timeout" : 300,
-						"retry_on_timeout" : True,
-						"max_retries" : 10,
-						},
-					},
-				"index" : [{"index": "mygene_gene_allspecies_current", "doc_type": "gene"}]
-				},
-			},
-		}
+    "indexer_select": {
+        # default
+        None: "hub.dataindex.indexer.TaxonomyIndexer",
+    },
+    "env": {
+        "prod": {
+            "host": "prodserver:9200",
+            "indexer": {
+                "args": {
+                    "timeout": 300,
+                    "retry_on_timeout": True,
+                    "max_retries": 10,
+                },
+            },
+            "index": [{"index": "genedoc_mygene_allspecies_current", "doc_type": "gene"}]
+        },
+        "test": {
+            "host": "localhost:9200",
+            "indexer": {
+                "args": {
+                    "timeout": 300,
+                    "retry_on_timeout": True,
+                    "max_retries": 10,
+                },
+            },
+            "index": [{"index": "mygene_gene_allspecies_current", "doc_type": "gene"}]
+        },
+    },
+}
+
+# Snapshot environment configuration
+SNAPSHOT_CONFIG = {
+    "env": {
+        "prod": {
+            "cloud": {
+                "type": "aws",  # default, only one supported by now
+                "access_key": None,
+                "secret_key": None,
+            },
+            "repository": {
+                "name": "taxonomy_repository-$(Y)",
+                "type": "s3",
+                "settings": {
+                    "bucket": "<SNAPSHOT_BUCKET_NAME>",
+                    "base_path": "biothings.species/$(Y)",  # per year
+                    "region": "us-west-2",
+                },
+                "acl": "private",
+            },
+            "indexer": {
+                # reference to INDEX_CONFIG
+                "env": "prod",
+            },
+            # when creating a snapshot, how long should we wait before querying ES
+            # to check snapshot status/completion ? (in seconds)
+            "monitor_delay": 60 * 5,
+        },
+        "demo": {
+            "cloud": {
+                "type": "aws",  # default, only one supported by now
+                "access_key": None,
+                "secret_key": None,
+            },
+            "repository": {
+                "name": "taxonomy_repository-demo-$(Y)",
+                "type": "s3",
+                "settings": {
+                    "bucket": "<SNAPSHOT_DEMO_BUCKET_NAME>",
+                    "base_path": "biothings.species/$(Y)",  # per year
+                    "region": "us-west-2",
+                },
+                "acl": "public",
+            },
+            "indexer": {
+                # reference to INDEX_CONFIG
+                "env": "test",
+            },
+            # when creating a snapshot, how long should we wait before querying ES
+            # to check snapshot status/completion ? (in seconds)
+            "monitor_delay": 10,
+        }
+    }
+}
+
+# Release configuration
+# Each root keys define a release environment (test, prod, ...)
+RELEASE_CONFIG = {
+    "env": {
+        "prod": {
+            "cloud": {
+                "type": "aws",  # default, only one supported by now
+                "access_key": None,
+                "secret_key": None,
+            },
+            "release": {
+                "bucket": "<RELEASES_BUCKET_NAME>",
+                "region": "us-west-2",
+                "folder": "biothings.species",
+                "auto": True,  # automatically generate release-note ?
+            },
+            "diff": {
+                "bucket": "<DIFFS_BUCKET_NAME>",
+                "folder": "biothings.species",
+                "region": "us-west-2",
+                "auto": True,  # automatically generate diff ? Careful if lots of changes
+            },
+        },
+        "demo": {
+            "cloud": {
+                "type": "aws",  # default, only one supported by now
+                "access_key": None,
+                "secret_key": None,
+            },
+            "release": {
+                "bucket": "<RELEASES_BUCKET_NAME>",
+                "region": "us-west-2",
+                "folder": "biothings.species-demo",
+                "auto": True,  # automatically generate release-note ?
+            },
+            "diff": {
+                "bucket": "<DIFFS_BUCKET_NAME>",
+                "folder": "biothings.species-demo",
+                "region": "us-west-2",
+                "auto": True,  # automatically generate diff ? Careful if lots of changes
+            },
+        }
+    }
+}
 
 ################################################################################
 # HUB_PASSWD
