@@ -29,6 +29,8 @@ class MyTaxonomyHubServer(HubServer):
                 poll_schedule="* * * * * */10")
         build_manager.configure()
         build_manager.configure()
+        # TODO: figure out why method configure is called twice
+        build_manager.poll()
         self.managers["build_manager"] = build_manager
         self.logger.info("Using custom builder %s" % TaxonomyDataBuilder)
 
@@ -63,10 +65,6 @@ class MyTaxonomyHubServer(HubServer):
         # self.commands["publish_diff"] = partial(self.managers["diff_manager"].publish_diff,config.S3_APP_FOLDER)
         # self.commands["publish_snapshot"] = partial(self.managers["index_manager"].publish_snapshot,s3_folder=config.S3_APP_FOLDER)
 
-    def before_start(self):
-        self.logger.info("Scheduling builds")
-        self.managers["build_manager"].poll("build",lambda conf:
-                self.shell.launch(partial(self.managers["build_manager"].merge,conf["_id"])))
 
 import hub.dataload
 # pass explicit list of datasources (no auto-discovery)
