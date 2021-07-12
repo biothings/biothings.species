@@ -11,7 +11,7 @@ from biothings.web.settings.default import ANNOTATION_KWARGS, QUERY_KWARGS
 # Elasticsearch variables
 # *****************************************************************************
 ES_HOST = 'es7.biothings.io:443'
-ES_ARGS = dict(aws=True)
+ES_ARGS = dict(aws=True, timeout=60)
 ES_INDICES = dict(taxon='mytaxon_current')
 
 # *****************************************************************************
@@ -38,13 +38,8 @@ QUERY_KWARGS['*']['has_gene'] = {
     'type': bool, 'default': False, 'alias': ['children_has_gene']}
 
 # *****************************************************************************
-# Analytics
+# Features
 # *****************************************************************************
-GA_ACTION_QUERY_GET = 'query_get'
-GA_ACTION_QUERY_POST = 'query_post'
-GA_ACTION_ANNOTATION_GET = 'species_get'
-GA_ACTION_ANNOTATION_POST = 'species_post'
-GA_TRACKER_URL = 't.biothings.io'
 
 STATUS_CHECK = {
     'id': '9606',
