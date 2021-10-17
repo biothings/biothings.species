@@ -1,0 +1,178 @@
+{
+  "aliases": {},
+  "mappings": {
+    "dynamic": "false",
+    "_meta": {
+      "build_date": "2021-10-17T13:37:19.490133-07:00",
+      "biothing_type": "taxon",
+      "src": {
+        "uniprot_species": {
+          "code": {
+            "file": "src/hub/dataload/sources/uniprot/uploader.py",
+            "repo": "https://github.com/biothings/biothings.species.git",
+            "commit": "c3bf43f",
+            "branch": "master",
+            "url": "https://github.com/biothings/biothings.species/tree/c3bf43f5655908ebc2c959ac695938b0879c16c1/src/hub/dataload/sources/uniprot/uploader.py"
+          },
+          "stats": {
+            "uniprot_species": 26658
+          },
+          "version": "20210803"
+        },
+        "geneinfo": {
+          "code": {
+            "file": "src/hub/dataload/sources/geneinfo/uploader.py",
+            "repo": "https://github.com/biothings/biothings.species.git",
+            "commit": "0d2c4b1",
+            "branch": "master",
+            "url": "https://github.com/biothings/biothings.species/tree/0d2c4b1682f20859d21c4a949e62413c35bb87b9/src/hub/dataload/sources/geneinfo/uploader.py"
+          },
+          "stats": {
+            "geneinfo": 34581
+          },
+          "version": "20211017"
+        },
+        "taxonomy": {
+          "code": {
+            "file": "src/hub/dataload/sources/taxonomy/uploader.py",
+            "repo": "https://github.com/biothings/biothings.species.git",
+            "commit": "934d4be",
+            "branch": "master",
+            "url": "https://github.com/biothings/biothings.species/tree/934d4becd7034657844a2cf4b7859bac099b1b61/src/hub/dataload/sources/taxonomy/uploader.py"
+          },
+          "stats": {
+            "names": 2370690,
+            "nodes": 2370690
+          },
+          "version": "20211017"
+        }
+      },
+      "stats": {
+        "unique taxonomy ids": 2370690,
+        "distribution of taxonomy ids by rank": {
+          "subsection": 21,
+          "superorder": 54,
+          "forma specialis": 737,
+          "varietas": 8834,
+          "subfamily": 3129,
+          "cohort": 5,
+          "section": 476,
+          "forma": 598,
+          "parvorder": 26,
+          "superkingdom": 4,
+          "isolate": 1322,
+          "superclass": 6,
+          "subkingdom": 1,
+          "subgenus": 1707,
+          "infraclass": 18,
+          "class": 447,
+          "subtribe": 574,
+          "species group": 339,
+          "serotype": 1244,
+          "order": 1701,
+          "biotype": 17,
+          "strain": 44860,
+          "infraorder": 130,
+          "suborder": 374,
+          "no rank": 227646,
+          "superfamily": 866,
+          "kingdom": 13,
+          "genotype": 20,
+          "species subgroup": 127,
+          "phylum": 290,
+          "subcohort": 3,
+          "serogroup": 140,
+          "superphylum": 1,
+          "genus": 100849,
+          "species": 1935004,
+          "series": 9,
+          "tribe": 2264,
+          "subphylum": 32,
+          "subclass": 163,
+          "subspecies": 26067,
+          "family": 9656,
+          "morph": 12,
+          "clade": 899,
+          "pathogroup": 5
+        }
+      },
+      "build_version": "20211017"
+    },
+    "properties": {
+      "all": {
+        "type": "text"
+      },
+      "common_name": {
+        "type": "text",
+        "copy_to": [
+          "all"
+        ]
+      },
+      "genbank_common_name": {
+        "type": "text"
+      },
+      "has_gene": {
+        "type": "boolean"
+      },
+      "lineage": {
+        "type": "long"
+      },
+      "parent_taxid": {
+        "type": "long"
+      },
+      "rank": {
+        "type": "text"
+      },
+      "scientific_name": {
+        "type": "text",
+        "copy_to": [
+          "all"
+        ]
+      },
+      "taxid": {
+        "type": "long",
+        "copy_to": [
+          "all"
+        ]
+      },
+      "uniprot_name": {
+        "type": "text"
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "routing": {
+        "allocation": {
+          "include": {
+            "_tier_preference": "data_content"
+          }
+        }
+      },
+      "query": {
+        "default_field": "_id,all"
+      },
+      "analysis": {
+        "normalizer": {
+          "keyword_lowercase_normalizer": {
+            "filter": [
+              "lowercase"
+            ],
+            "type": "custom",
+            "char_filter": []
+          }
+        },
+        "analyzer": {
+          "string_lowercase": {
+            "filter": "lowercase",
+            "tokenizer": "keyword"
+          },
+          "whitespace_lowercase": {
+            "filter": "lowercase",
+            "tokenizer": "whitespace"
+          }
+        }
+      }
+    }
+  }
+}
