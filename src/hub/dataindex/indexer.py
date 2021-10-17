@@ -2,11 +2,6 @@ import biothings.hub.dataindex.indexer as indexer
 
 
 class TaxonomyIndexer(indexer.Indexer):
-
-    def get_mapping(self):
-        mapping = super(TaxonomyIndexer,self).get_mapping()
-        mapping["properties"]["lineage"] = { 
-                "type": "long"
-                }
-
-        return mapping
+    def __init__(self, build_doc, indexer_env, index_name):
+        super().__init__(build_doc, indexer_env, index_name)
+        self.es_index_mappings['properties']['lineage'] = {'type': 'long'}
