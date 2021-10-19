@@ -39,20 +39,6 @@ class MyTaxonTests(BiothingsWebAppTest):
             ch_res = self.request(f'taxon/{child}').json()
             assert ch_res['has_gene']
 
-    def test_include_children_not_has_gene(self):
-        res = self.request(
-            'taxon', method='POST',
-            data={
-                'ids': ['1280'],
-                'include_children': True,
-                'has_gene': False,
-            }
-        ).json()
-        for child in res[0]['children']:
-            ch_res = self.request(f'taxon/{child}').json()
-            # FIXME: should has_gene be false or should it be ignored?
-            # assert not ch_res['has_gene']
-
     def test_expand(self):
         test_id = '1280'
         r1 = self.request(

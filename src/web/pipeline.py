@@ -30,7 +30,8 @@ class MytaxonQueryBuilder(ESQueryBuilder):
         search = search.query('match', lineage=_id)
 
         if options.get('has_gene'):
-            search = search.query('match', has_gene=options['has_gene'])
+            # has_gene is always set, either to True or False
+            search = search.query('match', has_gene=True)
 
         search = search.params(size=10000)
         search = search.params(_source='_id')
