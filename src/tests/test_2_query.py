@@ -21,7 +21,7 @@ class TestQueryGET(BiothingsDataTest):
 
         res = self.request('query?q=rat').json()
 
-        assert res['total'] >= 214
+        assert res['total'] >= 207
 
     def test_202(self):
         
@@ -35,7 +35,7 @@ class TestQueryGET(BiothingsDataTest):
         res = self.request('query?q=parent_taxid:9605').json()
         
         assert 'hits' in res
-        assert len(res['hits']) >= 4
+        assert len(res['hits']) >= 3
 
 class TestQueryPOST(BiothingsDataTest):
     host = 't.biothings.io'

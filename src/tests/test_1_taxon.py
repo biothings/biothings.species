@@ -128,7 +128,7 @@ class TestAnnotationGET(BiothingsDataTest):
         assert "uniprot_species" in res['src'].keys()
         assert "geneinfo" in res['src'].keys()
         assert "taxonomy" in res['src'].keys()
-        assert res['stats']['unique taxonomy ids'] >= 2434969
+        assert res['stats']['unique taxonomy ids'] >= 2370690
         assert len(res['stats']['distribution of taxonomy ids by rank']) >= 44
         assert res['stats']['distribution of taxonomy ids by rank']['kingdom'] == 13
         
