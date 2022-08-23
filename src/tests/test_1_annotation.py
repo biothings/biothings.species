@@ -6,6 +6,7 @@ Test Cases
 /v1/taxon/9606
 /v1/taxon/9606?fields=taxid,scientific_name,has_gene
 /v1/taxon/9606?include_children=1
+/v1/query?include_children=1&has_gene=1
 /v1/query?q=lineage:9606
 /v1/query?q=lineage:9606 AND has_gene:false
 /v1/metadata
@@ -20,13 +21,10 @@ ids=9605,9606&fields=has_gene,scientific_name,lineage
 
 class TestAnnotationGET(BiothingsDataTest):
     host = 't.biothings.io'
-    # host = '34.221.9.181'
     prefix = 'v1'
 
     def test_101(self):
-
         res = self.request('taxon/9606').json()
-        
         taxon = {
                     "_id": "9606",
                     "authority": [
@@ -47,14 +45,11 @@ class TestAnnotationGET(BiothingsDataTest):
                     "taxid": 9606,
                     "uniprot_name": "homo sapiens"
                 }
-
         # Is taxon a subset of res?
         assert taxon.items() <= dict(res).items()
 
     def test_102(self):
-
         res = self.request('taxon/9606?fields=taxid,scientific_name,has_gene').json()
-        
         taxon = {
             "_id": "9606",
             "has_gene": True,
@@ -68,7 +63,6 @@ class TestAnnotationGET(BiothingsDataTest):
     def test_103(self):
 
         res_children = self.request('taxon/9606?include_children=1').json()
-
         assert 'children' in res_children
 
         # should include a "children" field comparing to the first example
@@ -76,7 +70,6 @@ class TestAnnotationGET(BiothingsDataTest):
         assert taxon_id == 63221
 
         res_taxon = self.request('taxon/' + str(taxon_id)).json()
-
         # Tuple is ordered, unchangeable, and allows duplicate members.
         assert tuple(res_taxon) == tuple(['_id', '_version', 'authority', 
                         'common_name', 'genbank_common_name', 'has_gene', 
@@ -107,49 +100,20 @@ class TestAnnotationGET(BiothingsDataTest):
             assert lineage in res_taxon['lineage']
 
     def test_104(self):
-        
+        res = self.request('query?include_children=1&has_gene=1').json()
+        assert len(res['hits']) >= 10
+
+    def test_105(self):
         res = self.request('query?q=lineage:9606').json()
-        
         assert 'hits' in res
         assert len(res['hits']) == 3
 
-    def test_105(self):
-
+    def test_106(self):
         res = self.request('query?q=lineage:9606 AND has_gene:false').json()
-        
         assert 'hits' in res
         assert len(res['hits']) == 0
 
-    def test_106_metadata(self):
-
-        res = self.request("metadata").json()
-
-        assert res['biothing_type'] == "taxon"
-        assert "uniprot_species" in res['src'].keys()
-        assert "geneinfo" in res['src'].keys()
-        assert "taxonomy" in res['src'].keys()
-        assert res['stats']['unique taxonomy ids'] >= 2370690
-        assert len(res['stats']['distribution of taxonomy ids by rank']) >= 44
-        assert res['stats']['distribution of taxonomy ids by rank']['kingdom'] == 13
-        
-    def test_107_fields(self):
-
-        res = self.request('metadata/fields').json()
-
-        assert len(res) > 8
-
-        # Check some specific keys
-        assert 'common_name' in res
-        assert 'genbank_common_name' in res
-        assert 'has_gene' in res
-        assert 'lineage' in res
-        assert 'parent_taxid' in res
-        assert 'rank' in res
-        assert 'scientific_name' in res
-        assert 'taxid' in res
-        assert 'uniprot_name' in res
-
-    def test_108(self):
+    def test_107(self):
         """ GET /v1/taxon/
         {
             "code": 400,
@@ -160,22 +124,16 @@ class TestAnnotationGET(BiothingsDataTest):
         """
         self.request('taxon', expect=400)
 
-    def test_109(self):
-
+    def test_108(self):
         self.request('taxon/', expect=400)
 
 
 class TestAnnotationPOST(BiothingsDataTest):
     host = 't.biothings.io'
-    # host = '34.221.9.181'
     prefix = 'v1'
 
-    def test_110(self):
-
+    def test_109(self):
         res = self.request('taxon', method='POST', data={'ids': '9606'}).json()
-
-        print(res[0].keys())
-
         assert len(res) == 1
         assert res[0]['taxid'] == 9606
 
@@ -188,15 +146,13 @@ class TestAnnotationPOST(BiothingsDataTest):
             assert field in res[0]
         assert len(default_fields) <= len(res[0])
 
-    def test_111(self):
-
+    def test_110(self):
         res = self.request('taxon', method='POST', data={'ids': '9605, 9606'}).json()
         assert len(res) == 2
         assert res[0]['_id'] == '9605'
         assert res[1]['_id'] == '9606'
 
-    def test_112(self):
-
+    def test_111(self):
         data = {'ids': '9605,9606',
                 'fields': 'has_gene,scientific_name,lineage'}
         res = self.request('taxon', method='POST', data=data).json()
