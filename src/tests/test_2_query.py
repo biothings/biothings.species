@@ -13,8 +13,8 @@ q=homo sapiens&scopes=scientific_name
 """
 
 class TestQueryGET(BiothingsDataTest):
-    # host = 't.biothings.io'
-    host = '34.221.9.181'
+    host = 't.biothings.io'
+    # host = '34.221.9.181'
     prefix = 'v1'
 
     def test_201(self):

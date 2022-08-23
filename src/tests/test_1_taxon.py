@@ -19,8 +19,8 @@ ids=9605,9606&fields=has_gene,scientific_name,lineage
 """
 
 class TestAnnotationGET(BiothingsDataTest):
-    # host = 't.biothings.io'
-    host = '34.221.9.181'
+    host = 't.biothings.io'
+    # host = '34.221.9.181'
     prefix = 'v1'
 
     def test_101(self):
@@ -166,8 +166,8 @@ class TestAnnotationGET(BiothingsDataTest):
 
 
 class TestAnnotationPOST(BiothingsDataTest):
-    # host = 't.biothings.io'
-    host = '34.221.9.181'
+    host = 't.biothings.io'
+    # host = '34.221.9.181'
     prefix = 'v1'
 
     def test_110(self):
