@@ -55,7 +55,6 @@ class TestAnnotationGET(BiothingsDataTest):
             "scientific_name": "homo sapiens",
             "taxid": 9606,
         }
-
         # Is taxon a subset of res?
         assert taxon.items() <= dict(res).items()
 
@@ -126,7 +125,6 @@ class TestAnnotationGET(BiothingsDataTest):
 
     def test_108(self):
         self.request('taxon/', expect=400)
-
 
 class TestAnnotationPOST(BiothingsDataTest):
     host = 't.biothings.io'
