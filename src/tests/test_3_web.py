@@ -1,6 +1,5 @@
 from biothings.tests.web import BiothingsDataTest
 
-
 class TestTaxonWeb(BiothingsDataTest):
     host = 't.biothings.io'
     prefix = 'v1'
