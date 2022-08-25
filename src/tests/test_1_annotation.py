@@ -1,4 +1,3 @@
-from operator import contains
 from biothings.tests.web import BiothingsDataTest
 
 """
