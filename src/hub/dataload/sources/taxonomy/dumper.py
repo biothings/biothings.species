@@ -16,7 +16,7 @@ class TaxonomyDumper(FTPDumper):
     CWD_DIR = '/pub/taxonomy'
     SUFFIX_ATTR = "timestamp"
 
-    SCHEDULE = "0 9 * * *"
+    SCHEDULE = "0 9 5 * *"    # monthly 5th at 9am
 
     def create_todump_list(self, force=False):
         file_to_dump = "taxdump.tar.gz"

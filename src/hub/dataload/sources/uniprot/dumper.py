@@ -15,7 +15,7 @@ class UniprotSpeciesDumper(FTPDumper):
     CWD_DIR = '/pub/databases/uniprot/current_release/knowledgebase/complete/docs'
     SUFFIX_ATTR = "timestamp"
 
-    SCHEDULE = "0 9 * * *"
+    SCHEDULE = "0 9 5 * *"    # monthly 5th at 9am
 
     def create_todump_list(self, force=False):
         file_to_dump = "speclist.txt"
