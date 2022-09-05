@@ -238,9 +238,9 @@ def mongo_import(entries):
     db = client.taxonomy.taxonomy
     entries_list = [d for d in entries.values()]
     db.insert(entries_list)
-    db.ensure_index('lineage')
-    db.ensure_index('taxid')
-    db.ensure_index('parent_taxid')
+    db.create_index('lineage')
+    db.create_index('taxid')
+    db.create_index('parent_taxid')
 
 if __name__ == "__main__":
     main()

@@ -28,7 +28,7 @@ class TaxonomyDataBuilder(DataBuilder):
         keys = ["rank","taxid"]
         self.logger.info("Creating indices on %s" % repr(keys))
         for k in keys:
-            self.target_backend.target_collection.ensure_index(k)
+            self.target_backend.target_collection.create_index(k)
 
     def get_stats(self, sources, job_manager):
         self.logger.info("Computing metadata...")

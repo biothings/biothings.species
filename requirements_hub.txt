@@ -1,2 +1,2 @@
 # species requirements
-git+https://github.com/biothings/biothings.api@master#egg=biothings[hub]
+-e git+https://github.com/biothings/biothings.api@0.11.x#egg=biothings[hub]

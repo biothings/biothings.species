@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
-import os, logging
+import os
+import logging
 from functools import partial
 
-import config, biothings
+import biothings
 from biothings.utils.version import set_versions
-app_folder,_src = os.path.split(os.path.split(os.path.split(os.path.abspath(__file__))[0])[0])
-set_versions(config,app_folder)
-biothings.config_for_app(config)
+
+app_folder, _src = os.path.split(os.path.split(os.path.split(os.path.abspath(__file__))[0])[0])
+del _src
+import config
+set_versions(config, app_folder)
 
 from biothings.hub import HubServer
 import biothings.hub.databuild.builder as builder
@@ -49,9 +52,9 @@ class MyTaxonomyHubServer(HubServer):
     def configure_commands(self):
         super().configure_commands() # keep all originals...
         self.commands["es_sync_test"] = partial(self.managers["sync_manager_test"].sync,"es",
-                                           target_backend=(config.INDEX_CONFIG["env"]["test"]["host"],
-                                                           config.INDEX_CONFIG["env"]["test"]["index"][0]["index"],
-                                                           config.INDEX_CONFIG["env"]["test"]["index"][0]["doc_type"]))
+                                           target_backend=(config.INDEX_CONFIG["env"]["hub_es"]["host"],
+                                                           config.INDEX_CONFIG["env"]["hub_es"]["index"][0]["index"],
+                                                           config.INDEX_CONFIG["env"]["hub_es"]["index"][0]["doc_type"]))
         self.commands["es_sync_prod"] = partial(self.managers["sync_manager"].sync,"es",
                                            target_backend=(config.INDEX_CONFIG["env"]["prod"]["host"],
                                                            config.INDEX_CONFIG["env"]["prod"]["index"][0]["index"],
@@ -68,9 +71,7 @@ class MyTaxonomyHubServer(HubServer):
 
 import hub.dataload
 # pass explicit list of datasources (no auto-discovery)
-server = MyTaxonomyHubServer(hub.dataload.__sources__,name=config.HUB_NAME)
+server = MyTaxonomyHubServer(hub.dataload.__sources__, name=config.HUB_NAME)
 
 if __name__ == "__main__":
     server.start()
-
-
