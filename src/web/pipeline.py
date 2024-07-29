@@ -77,9 +77,9 @@ class MytaxonQueryBackend(AsyncESQueryBackend):
 
 class MytaxonTransform(ESResultFormatter):
 
-    def transform_hit(self, path, doc, options):
+    def transform_hit(self, path, obj, doc, options):
 
-        super().transform_hit(path, doc, options)
+        super().transform_hit(path, obj, doc, options)
 
         # children field in top level
         if path == '' and 'children' in doc:
