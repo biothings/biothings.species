@@ -10,7 +10,7 @@ from biothings.web.settings.default import ANNOTATION_KWARGS, QUERY_KWARGS
 # *****************************************************************************
 # Elasticsearch variables
 # *****************************************************************************
-ES_HOST = 'localhost:9200'
+ES_HOST = 'http://localhost:9200'
 ES_ARGS = dict(timeout=60)
 ES_INDICES = dict(taxon='mytaxon_current')
 
