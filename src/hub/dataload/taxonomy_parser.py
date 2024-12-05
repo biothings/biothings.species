@@ -1,31 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 11 11:09:56 2014
-
-@author: Greg
-
-Taxonomy Parser
-
-
-Much faster than the version in taxonomy.py
-
-Does everything in memory instead of through mongodb (~2-3 hrs > ~30 sec)
-
-To import manually:
-cat tax.json | parallel -j8 --pipe mongoimport -d taxonomy -c taxonomy
-mongo taxonomy --eval "db.taxonomy.ensureIndex({'taxid': true})"
-mongo taxonomy --eval "db.taxonomy.ensureIndex({'lineage': true})"
-mongo taxonomy --eval "db.taxonomy.ensureIndex({'parent_taxid': true})"
-
-"""
-
-import tarfile
-import os
 import json
+import os
+import tarfile
 from collections import defaultdict
 from itertools import groupby
 
-## *** Download these files *****
+# *** Download these files *****
 '''
 wget -N ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
 wget -N ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/docs/speclist.txt
@@ -35,46 +15,19 @@ wget -N ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_info.gz
 '''
 gunzip -c gene_info.gz | tail -n+2 | cut -f1 | sort | uniq > gene_info_uniq
 '''
-## ****Change Me *****
+# ****Change Me *****
 FLAT_FILE_PATH = "flat_files"
+
 
 def main():
     '''
     Build the taxonomy database from flatfiles downloaded from ncbi and uniprot
-
-    Mandatory fields
-    'taxid':            organism's taxonomy ID
-    'parent_taxid':     organism's parent's tax ID (from refseq nodes file)
-    'scientific_name':  organism's name from refseq names file
-    'rank':             one of: ['superkingdom', 'kingdom', 'subkingdom', 'superphylum', 'phylum', 'subphylum',
-                        'superclass', 'class', 'subclass', 'infraclass', 'superorder', 'order', 'suborder',
-                        'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus', 
-                        'subgenus', 'species group', 'species subgroup', 'species', 'subspecies', 'varietas', 'forma', 'no rank']
-    'rank#':            Rank in 'rank', starting with 'superkingdom': 0  to 'forma': 27. 'no rank': None
-
-    Optional fields
-    'other_names':          list of strings from following fields cat together (optional)
-                            ["acronym","anamorph","blast name","equivalent name","genbank acronym","genbank anamorph",
-                             "genbank synonym","includes","misnomer","misspelling","synonym","teleomorph"]
-    'uniprot_name':         organism name from uniprot (optional)
-    'common_name' :         organism's common name from refseq names file (optional)
-    'genbank_common_name':  organism's genbank common name from refseq names file (optional)
-    'authority':            reference to the taxonomic publication where the name was first described
-    'type material':        http://www.ncbi.nlm.nih.gov/news/01-21-2014-sequence-by-type/
-    'in-part':              useful as retrieval terms
-
-    More information on fields here: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3245000/
-
-    List all fields:
-    cat names.dmp | cut -f7 | sort | uniq
-
-    List all ranks:
-    cat nodes.dmp | cut -f5 | sort | uniq
     '''
     # Possible ranks
-    ranks = ['superkingdom', 'kingdom', 'subkingdom', 'superphylum', 'phylum', 'subphylum', 'superclass', 'class', 'subclass', 'infraclass', 'superorder',
-     'order', 'suborder', 'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus', 'subgenus', 'species group',
-     'species subgroup', 'species', 'subspecies', 'varietas', 'forma', 'no rank']
+    ranks = ['superkingdom', 'kingdom', 'subkingdom', 'superphylum', 'phylum', 'subphylum', 'superclass', 'class',
+             'subclass', 'infraclass', 'superorder', 'order', 'suborder', 'infraorder', 'parvorder', 'superfamily',
+             'family', 'subfamily', 'tribe', 'subtribe', 'genus', 'subgenus', 'species group', 'species subgroup',
+             'species', 'subspecies', 'varietas', 'forma', 'strain', 'no rank']
 
     # Parse NCBI Files
     in_file = os.path.join(FLAT_FILE_PATH, 'taxdump.tar.gz')
@@ -90,15 +43,24 @@ def main():
     with open(in_file) as uniprot_speclist:
         uniprot = parse_uniprot_speclist(uniprot_speclist)
 
-    # combines list of dictionaries into dictionary of dictionaries where key on outer dict is 'taxid'
+    # Combine entries by taxid
     entries = combine_by_taxid(names, nodes, uniprot)
 
     # Some tax_ids in uniprot but not in ncbi nodes file, so make sure there's a parent_taxid for each entry
-    entries = dict([(key, value) for (key,value) in entries.items() if 'parent_taxid' in value.keys()])
+    entries = dict([(key, value) for (key, value)
+                   in entries.items() if 'parent_taxid' in value.keys()])
 
     # Set rank#
     for taxid in entries.keys():
-        entries[taxid]['rank#'] = None if entries[taxid]['rank'] == 'no rank' else ranks.index(entries[taxid]['rank'])
+        rank = entries[taxid]['rank']
+        if rank == 'no rank':
+            entries[taxid]['rank#'] = None
+        elif rank in ranks:
+            entries[taxid]['rank#'] = ranks.index(rank)
+        else:
+            entries[taxid]['rank#'] = None
+            print(f"Warning: Rank '{rank}' for taxid {
+                  taxid} is not in the ranks list.")
 
     # Mark tax_ids that have a gene in ncbi
     in_file = os.path.join(FLAT_FILE_PATH, 'gene_info_uniq')
@@ -111,23 +73,32 @@ def main():
     for entry in entries.values():
         get_lineage(entry, entries)
 
-    # Write everythig back out to a flatfile for loading into elastic search        
+    # Build parent-to-children mapping
+    parent_to_children = defaultdict(list)
+    for entry in entries.values():
+        parent_id = entry['parent_taxid']
+        if parent_id != entry['taxid']:  # Exclude root node
+            parent_to_children[parent_id].append(entry['taxid'])
+
+    # Set 'children' field
+    for entry in entries.values():
+        entry['children'] = parent_to_children.get(entry['taxid'], [])
+
+    # Write everything back out to a flatfile for loading into elastic search
     # Each line is a json obj
     write_entries(entries, os.path.join(FLAT_FILE_PATH, 'tax.json'))
 
-    # Or just insert them to mongodb. hardcoded, sorry. todo Add command-line args
-    #mongo_import(entries)
-
     return entries
+
 
 def parse_refseq_names(names_file):
     '''
     names_file is a file-like object yielding 'names.dmp' from taxdump.tar.gz
     '''
     names = []
-    #Collapse all the following fields into "synonyms"
-    other_names = ["acronym","anamorph","blast name","equivalent name","genbank acronym","genbank anamorph",
-    "genbank synonym","includes","misnomer","misspelling","synonym","teleomorph"]
+    # Collapse all the following fields into "synonyms"
+    other_names = ["acronym", "anamorph", "blast name", "equivalent name", "genbank acronym", "genbank anamorph",
+                   "genbank synonym", "includes", "misnomer", "misspelling", "synonym", "teleomorph"]
     # keep separate: "common name", "genbank common name"
     names_gb = groupby(names_file, lambda x: x[:x.index(b'\t')])
     for taxid, entry in names_gb:
@@ -138,22 +109,24 @@ def parse_refseq_names(names_file):
             field = split_line[6]
             value = split_line[2].lower()
             if field == 'scientific name':
-                d['scientific_name'] = value #only one per entry. Store as str (not in a list)
+                # only one per entry. Store as str (not in a list)
+                d['scientific_name'] = value
             elif field in other_names:
-                d['other_names'].append(value) #always a list
+                d['other_names'].append(value)  # always a list
             elif field == "common name":
-                if d['common_name'] == []: #empty
-                    d['common_name'] = value # set as string
-                elif type(d['common_name']) == str: # has a single entry
-                    d['common_name'] = [d['common_name']] #make it a list
+                if d['common_name'] == []:  # empty
+                    d['common_name'] = value  # set as string
+                elif isinstance(d['common_name'], str):  # has a single entry
+                    d['common_name'] = [d['common_name']]  # make it a list
                     d['common_name'].append(value)
                 else:
                     d['common_name'].append(value)
             elif field == "genbank common name":
-                if d['genbank_common_name'] == []: #empty
-                    d['genbank_common_name'] = value # set as string
-                elif type(d['genbank_common_name']) == str: # has a single entry
-                    d['genbank_common_name'] = [d['genbank_common_name']] #make it a list
+                if d['genbank_common_name'] == []:  # empty
+                    d['genbank_common_name'] = value  # set as string
+                elif isinstance(d['genbank_common_name'], str):  # has a single entry
+                    d['genbank_common_name'] = [
+                        d['genbank_common_name']]  # make it a list
                     d['genbank_common_name'].append(value)
                 else:
                     d['genbank_common_name'].append(value)
@@ -161,6 +134,7 @@ def parse_refseq_names(names_file):
                 d[field].append(value)
         names.append(dict(d))
     return names
+
 
 def parse_refseq_nodes(nodes_file):
     '''
@@ -176,6 +150,7 @@ def parse_refseq_nodes(nodes_file):
         nodes.append(d)
     return nodes
 
+
 def parse_uniprot_speclist(uniprot_speclist):
     '''
     uniprot_speclist is a file-like object yielding 'speclist.txt'
@@ -186,11 +161,13 @@ def parse_uniprot_speclist(uniprot_speclist):
         if line.startswith('_____'):
             break
     for line in uniprot_speclist:
-        if line.count('N='):
+        if 'N=' in line:
             organism_name = line.split('N=')[-1].strip().lower()
             taxonomy_id = int(line.split()[2][:-1])
-            uniprot.append({'uniprot_name': organism_name, 'taxid': taxonomy_id})
+            uniprot.append(
+                {'uniprot_name': organism_name, 'taxid': taxonomy_id})
     return uniprot
+
 
 def combine_by_taxid(*args):
     # Accepts multiple lists of dictionaries
@@ -205,26 +182,25 @@ def combine_by_taxid(*args):
         entries[entry['taxid']] = entry
     return entries
 
+
 def get_lineage(entry, entries):
-    if entry['taxid'] == entry['parent_taxid']: #take care of node #1
+    if entry['taxid'] == entry['parent_taxid']:  # take care of node #1
         entry['lineage'] = [entry['taxid']]
         return entry
     lineage = [entry['taxid'], entry['parent_taxid']]
     while lineage[-1] != 1:
-        parent = entries[lineage[-1]]
-        if 'lineage' in parent: # caught up with already calculated lineage
-            lineage.extend(parent['lineage'][1:]) # extend list, don't recalculate
-            entry['lineage'] = lineage
-            return entry
+        parent = entries.get(lineage[-1])
+        if parent is None:
+            # Handle missing parent
+            break
+        if 'lineage' in parent:  # caught up with already calculated lineage
+            # extend list, don't recalculate
+            lineage.extend(parent['lineage'][1:])
+            break
         lineage.append(parent['parent_taxid'])
     entry['lineage'] = lineage
     return entry
 
-def get_all_children(taxid, entries, has_gene = True):
-    if has_gene:
-        return [taxid] + [value['taxid'] for (key,value) in entries.items() if taxid in value['lineage'] and value['has_gene'] == True]
-    else:
-        return [taxid] + [value['taxid'] for (key,value) in entries.items() if taxid in value['lineage']]
 
 def write_entries(entries, filepath):
     f = open(filepath, 'w')
@@ -232,16 +208,6 @@ def write_entries(entries, filepath):
         f.write(json.dumps(entry) + '\n')
     f.close()
 
-def mongo_import(entries):
-    from pymongo import MongoClient
-    client = MongoClient()
-    db = client.taxonomy.taxonomy
-    entries_list = [d for d in entries.values()]
-    db.insert(entries_list)
-    db.create_index('lineage')
-    db.create_index('taxid')
-    db.create_index('parent_taxid')
 
 if __name__ == "__main__":
     main()
-    #pass
