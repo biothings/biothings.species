@@ -114,20 +114,41 @@ def main():
     for entry in entries.values():
         get_lineage(entry, entries)
 
-    # *** Add children field ***
-    # Build a mapping of parent_taxid -> list of children
-    children_map = defaultdict(list)
-    for taxid, entry in entries.items():
-        parent = entry['parent_taxid']
-        # Avoid self-referencing for the root
-        if parent != taxid:
-            children_map[parent].append(taxid)
+    # parents: For a strict tree, each node except the root has exactly one parent.
+    # The root node is where taxid == parent_taxid.
+    for ent in entries.values():
+        if ent['taxid'] != ent['parent_taxid']:
+            ent['parents'] = [ent['parent_taxid']]
+        else:
+            # root node: no parent
+            ent['parents'] = []
 
-    # Add children to each entry
-    for taxid, entry in entries.items():
-        entry['children'] = children_map.get(taxid, [])
+    # children: Invert the parent relationship
+    parent_to_children = defaultdict(list)
+    for tid, ent in entries.items():
+        if ent['parent_taxid'] != tid:
+            parent_to_children[ent['parent_taxid']].append(tid)
 
-    # Write everythig back out to a flatfile for loading into elastic search
+    for tid, ent in entries.items():
+        ent['children'] = parent_to_children.get(tid, [])
+
+    # ancestors: All nodes in lineage except the node itself
+    for ent in entries.values():
+        # lineage includes the node as the first element
+        ent['ancestors'] = ent['lineage'][1:]
+
+    # descendants: all nodes that have this node in their lineage
+    # We'll initialize and then populate by iterating over every entry's lineage
+    for ent in entries.values():
+        ent['descendants'] = []
+
+    for tid, ent in entries.items():
+        # ent['lineage'][0] = tid itself, so lineage[1:] are the ancestors
+        for ancestor_tid in ent['lineage'][1:]:
+            entries[ancestor_tid]['descendants'].append(tid)
+    ###########################################################
+
+    # Write everything back out to a flatfile for loading into elastic search
     # Each line is a json obj
     write_entries(entries, os.path.join(FLAT_FILE_PATH, 'tax.json'))
 
@@ -273,4 +294,3 @@ def mongo_import(entries):
 
 if __name__ == "__main__":
     main()
-    # pass
