@@ -68,7 +68,7 @@ class LineageMapper(mapper.BaseMapper):
             self.logger.info("Finished precomputing descendants.")
 
     def _get_all_descendants(self, taxid):
-        # BFS or DFS to find all descendants
+        # BFS to find all descendants
         descendants = []
         queue = deque(self.parent_to_children.get(taxid, []))
         while queue:
@@ -103,9 +103,19 @@ class LineageMapper(mapper.BaseMapper):
 
         # ancestors (lineage except the node itself)
         doc['ancestors'] = doc['lineage'][1:]
+        if len(doc['ancestors']) > 1000:
+            self.logger.warning(
+                "Ancestors for taxid %s is over 1000: %d. Capping to 1000." % (
+                    doc['taxid'], len(doc['ancestors']))
+            )
+            doc['ancestors'] = doc['ancestors'][:1000]
 
         # descendants from precomputed map
         doc['descendants'] = self.descendants_map.get(doc['taxid'], [])
+        if len(doc['descendants']) > 1000:
+            self.logger.warning(
+                "Descendants for taxid %s is over 1000: %d. Capping to 1000." % (doc['taxid'], len(doc['descendants'])))
+            doc['descendants'] = doc['descendants'][:1000]
 
         return doc
 
