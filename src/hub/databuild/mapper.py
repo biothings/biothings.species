@@ -72,12 +72,6 @@ class LineageMapper(mapper.BaseMapper):
 
         # ancestors (lineage except the node itself)
         doc['ancestors'] = doc['lineage'][1:]
-        if len(doc['ancestors']) > 1000:
-            self.logger.warning(
-                "Ancestors for taxid %s is over 1000: %d. Capping to 1000." % (
-                    doc['taxid'], len(doc['ancestors']))
-            )
-            doc['ancestors'] = doc['ancestors'][:1000]
 
         return doc
 
