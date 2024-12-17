@@ -68,10 +68,14 @@ class LineageMapper(mapper.BaseMapper):
             doc['lineage'] = lineage
 
         # children
-        doc['children'] = self.parent_to_children.get(doc['taxid'], [])
+        children = self.parent_to_children.get(doc['taxid'], [])
+        if children:
+            doc['children'] = children
 
         # ancestors (lineage except the node itself)
-        doc['ancestors'] = doc['lineage'][1:]
+        ancestors = doc['lineage'][1:]
+        if ancestors:
+            doc['ancestors'] = ancestors
 
         return doc
 
