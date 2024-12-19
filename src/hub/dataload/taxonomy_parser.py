@@ -19,13 +19,13 @@ mongo taxonomy --eval "db.taxonomy.ensureIndex({'parent_taxid': true})"
 
 """
 
-import tarfile
-import os
 import json
+import os
+import tarfile
 from collections import defaultdict
 from itertools import groupby
 
-## *** Download these files *****
+# *** Download these files *****
 '''
 wget -N ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
 wget -N ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/docs/speclist.txt
@@ -35,8 +35,9 @@ wget -N ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_info.gz
 '''
 gunzip -c gene_info.gz | tail -n+2 | cut -f1 | sort | uniq > gene_info_uniq
 '''
-## ****Change Me *****
+# ****Change Me *****
 FLAT_FILE_PATH = "flat_files"
+
 
 def main():
     '''
@@ -48,7 +49,7 @@ def main():
     'scientific_name':  organism's name from refseq names file
     'rank':             one of: ['superkingdom', 'kingdom', 'subkingdom', 'superphylum', 'phylum', 'subphylum',
                         'superclass', 'class', 'subclass', 'infraclass', 'superorder', 'order', 'suborder',
-                        'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus', 
+                        'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus',
                         'subgenus', 'species group', 'species subgroup', 'species', 'subspecies', 'varietas', 'forma', 'no rank']
     'rank#':            Rank in 'rank', starting with 'superkingdom': 0  to 'forma': 27. 'no rank': None
 
@@ -73,8 +74,8 @@ def main():
     '''
     # Possible ranks
     ranks = ['superkingdom', 'kingdom', 'subkingdom', 'superphylum', 'phylum', 'subphylum', 'superclass', 'class', 'subclass', 'infraclass', 'superorder',
-     'order', 'suborder', 'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus', 'subgenus', 'species group',
-     'species subgroup', 'species', 'subspecies', 'varietas', 'forma', 'no rank']
+             'order', 'suborder', 'infraorder', 'parvorder', 'superfamily', 'family', 'subfamily', 'tribe', 'subtribe', 'genus', 'subgenus', 'species group',
+             'species subgroup', 'species', 'subspecies', 'varietas', 'forma', 'no rank']
 
     # Parse NCBI Files
     in_file = os.path.join(FLAT_FILE_PATH, 'taxdump.tar.gz')
@@ -94,11 +95,13 @@ def main():
     entries = combine_by_taxid(names, nodes, uniprot)
 
     # Some tax_ids in uniprot but not in ncbi nodes file, so make sure there's a parent_taxid for each entry
-    entries = dict([(key, value) for (key,value) in entries.items() if 'parent_taxid' in value.keys()])
+    entries = dict([(key, value) for (key, value)
+                   in entries.items() if 'parent_taxid' in value.keys()])
 
     # Set rank#
     for taxid in entries.keys():
-        entries[taxid]['rank#'] = None if entries[taxid]['rank'] == 'no rank' else ranks.index(entries[taxid]['rank'])
+        entries[taxid]['rank#'] = None if entries[taxid]['rank'] == 'no rank' else ranks.index(
+            entries[taxid]['rank'])
 
     # Mark tax_ids that have a gene in ncbi
     in_file = os.path.join(FLAT_FILE_PATH, 'gene_info_uniq')
@@ -111,23 +114,58 @@ def main():
     for entry in entries.values():
         get_lineage(entry, entries)
 
-    # Write everythig back out to a flatfile for loading into elastic search        
+    # parents: For a strict tree, each node except the root has exactly one parent.
+    # The root node is where taxid == parent_taxid.
+    for ent in entries.values():
+        if ent['taxid'] != ent['parent_taxid']:
+            ent['parents'] = [ent['parent_taxid']]
+        else:
+            # root node: no parent
+            ent['parents'] = []
+
+    # children: Invert the parent relationship
+    parent_to_children = defaultdict(list)
+    for tid, ent in entries.items():
+        if ent['parent_taxid'] != tid:
+            parent_to_children[ent['parent_taxid']].append(tid)
+
+    for tid, ent in entries.items():
+        ent['children'] = parent_to_children.get(tid, [])
+
+    # ancestors: All nodes in lineage except the node itself
+    for ent in entries.values():
+        # lineage includes the node as the first element
+        ent['ancestors'] = ent['lineage'][1:]
+
+    # descendants: all nodes that have this node in their lineage
+    # We'll initialize and then populate by iterating over every entry's lineage
+    for ent in entries.values():
+        ent['descendants'] = []
+
+    for tid, ent in entries.items():
+        # ent['lineage'][0] = tid itself, so lineage[1:] are the ancestors
+        for ancestor_tid in ent['lineage'][1:]:
+            entries[ancestor_tid]['descendants'].append(tid)
+    ###########################################################
+
+    # Write everything back out to a flatfile for loading into elastic search
     # Each line is a json obj
     write_entries(entries, os.path.join(FLAT_FILE_PATH, 'tax.json'))
 
     # Or just insert them to mongodb. hardcoded, sorry. todo Add command-line args
-    #mongo_import(entries)
+    # mongo_import(entries)
 
     return entries
+
 
 def parse_refseq_names(names_file):
     '''
     names_file is a file-like object yielding 'names.dmp' from taxdump.tar.gz
     '''
     names = []
-    #Collapse all the following fields into "synonyms"
-    other_names = ["acronym","anamorph","blast name","equivalent name","genbank acronym","genbank anamorph",
-    "genbank synonym","includes","misnomer","misspelling","synonym","teleomorph"]
+    # Collapse all the following fields into "synonyms"
+    other_names = ["acronym", "anamorph", "blast name", "equivalent name", "genbank acronym", "genbank anamorph",
+                   "genbank synonym", "includes", "misnomer", "misspelling", "synonym", "teleomorph"]
     # keep separate: "common name", "genbank common name"
     names_gb = groupby(names_file, lambda x: x[:x.index(b'\t')])
     for taxid, entry in names_gb:
@@ -138,22 +176,24 @@ def parse_refseq_names(names_file):
             field = split_line[6]
             value = split_line[2].lower()
             if field == 'scientific name':
-                d['scientific_name'] = value #only one per entry. Store as str (not in a list)
+                # only one per entry. Store as str (not in a list)
+                d['scientific_name'] = value
             elif field in other_names:
-                d['other_names'].append(value) #always a list
+                d['other_names'].append(value)  # always a list
             elif field == "common name":
-                if d['common_name'] == []: #empty
-                    d['common_name'] = value # set as string
-                elif type(d['common_name']) == str: # has a single entry
-                    d['common_name'] = [d['common_name']] #make it a list
+                if d['common_name'] == []:  # empty
+                    d['common_name'] = value  # set as string
+                elif type(d['common_name']) == str:  # has a single entry
+                    d['common_name'] = [d['common_name']]  # make it a list
                     d['common_name'].append(value)
                 else:
                     d['common_name'].append(value)
             elif field == "genbank common name":
-                if d['genbank_common_name'] == []: #empty
-                    d['genbank_common_name'] = value # set as string
-                elif type(d['genbank_common_name']) == str: # has a single entry
-                    d['genbank_common_name'] = [d['genbank_common_name']] #make it a list
+                if d['genbank_common_name'] == []:  # empty
+                    d['genbank_common_name'] = value  # set as string
+                elif type(d['genbank_common_name']) == str:  # has a single entry
+                    d['genbank_common_name'] = [
+                        d['genbank_common_name']]  # make it a list
                     d['genbank_common_name'].append(value)
                 else:
                     d['genbank_common_name'].append(value)
@@ -161,6 +201,7 @@ def parse_refseq_names(names_file):
                 d[field].append(value)
         names.append(dict(d))
     return names
+
 
 def parse_refseq_nodes(nodes_file):
     '''
@@ -176,6 +217,7 @@ def parse_refseq_nodes(nodes_file):
         nodes.append(d)
     return nodes
 
+
 def parse_uniprot_speclist(uniprot_speclist):
     '''
     uniprot_speclist is a file-like object yielding 'speclist.txt'
@@ -189,8 +231,10 @@ def parse_uniprot_speclist(uniprot_speclist):
         if line.count('N='):
             organism_name = line.split('N=')[-1].strip().lower()
             taxonomy_id = int(line.split()[2][:-1])
-            uniprot.append({'uniprot_name': organism_name, 'taxid': taxonomy_id})
+            uniprot.append(
+                {'uniprot_name': organism_name, 'taxid': taxonomy_id})
     return uniprot
+
 
 def combine_by_taxid(*args):
     # Accepts multiple lists of dictionaries
@@ -205,32 +249,37 @@ def combine_by_taxid(*args):
         entries[entry['taxid']] = entry
     return entries
 
+
 def get_lineage(entry, entries):
-    if entry['taxid'] == entry['parent_taxid']: #take care of node #1
+    if entry['taxid'] == entry['parent_taxid']:  # take care of node #1
         entry['lineage'] = [entry['taxid']]
         return entry
     lineage = [entry['taxid'], entry['parent_taxid']]
     while lineage[-1] != 1:
         parent = entries[lineage[-1]]
-        if 'lineage' in parent: # caught up with already calculated lineage
-            lineage.extend(parent['lineage'][1:]) # extend list, don't recalculate
+        if 'lineage' in parent:  # caught up with already calculated lineage
+            # extend list, don't recalculate
+            lineage.extend(parent['lineage'][1:])
             entry['lineage'] = lineage
             return entry
         lineage.append(parent['parent_taxid'])
     entry['lineage'] = lineage
     return entry
 
-def get_all_children(taxid, entries, has_gene = True):
+
+def get_all_children(taxid, entries, has_gene=True):
     if has_gene:
-        return [taxid] + [value['taxid'] for (key,value) in entries.items() if taxid in value['lineage'] and value['has_gene'] == True]
+        return [taxid] + [value['taxid'] for (key, value) in entries.items() if taxid in value['lineage'] and value['has_gene'] == True]
     else:
-        return [taxid] + [value['taxid'] for (key,value) in entries.items() if taxid in value['lineage']]
+        return [taxid] + [value['taxid'] for (key, value) in entries.items() if taxid in value['lineage']]
+
 
 def write_entries(entries, filepath):
     f = open(filepath, 'w')
     for entry in entries.values():
         f.write(json.dumps(entry) + '\n')
     f.close()
+
 
 def mongo_import(entries):
     from pymongo import MongoClient
@@ -242,6 +291,6 @@ def mongo_import(entries):
     db.create_index('taxid')
     db.create_index('parent_taxid')
 
+
 if __name__ == "__main__":
     main()
-    #pass
