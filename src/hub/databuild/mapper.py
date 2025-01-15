@@ -34,7 +34,7 @@ class HasGeneMapper(mapper.BaseMapper):
             yield doc
 
 
-class LineageMapper(BaseMapper):
+class LineageMapper(mapper.BaseMapper):
 
     def __init__(self, *args, **kwargs):
         super(LineageMapper, self).__init__(*args, **kwargs)
