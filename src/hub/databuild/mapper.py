@@ -81,7 +81,7 @@ class LineageMapper(mapper.BaseMapper):
 
             # Build _has_gene_children as a filtered subset
             doc["_has_gene_children"] = [
-                child for child in children if child in self.has_gene_set
+                child for child in children if str(child) in self.has_gene_set
             ]
         else:
             doc["children"] = []
