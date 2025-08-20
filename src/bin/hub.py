@@ -17,7 +17,7 @@ from biothings.utils.version import set_versions
 
 import hub.dataload
 from hub.databuild.builder import TaxonomyDataBuilder
-from hub.databuild.mapper import BacterialAbbreviationMapper, HasGeneMapper
+from hub.databuild.mapper import HasGeneMapper
 
 app_folder, _src = os.path.split(os.path.split(
     os.path.split(os.path.abspath(__file__))[0])[0])
@@ -30,10 +30,7 @@ class MyTaxonomyHubServer(HubServer):
 
     def configure_build_manager(self):
         hasgene = HasGeneMapper(name="has_gene")
-        bacterial_abbrev = BacterialAbbreviationMapper(
-            name="bacterial_abbreviation")
-        pbuilder = partial(TaxonomyDataBuilder, mappers=[
-                           hasgene, bacterial_abbrev])
+        pbuilder = partial(TaxonomyDataBuilder, mappers=[hasgene])
         build_manager = builder.BuilderManager(
             job_manager=self.managers["job_manager"],
             builder_class=pbuilder,

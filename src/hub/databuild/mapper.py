@@ -150,7 +150,11 @@ class BacterialAbbreviationMapper(mapper.BaseMapper):
         return name
 
     def process(self, docs):
+        processed_count = 0
+        abbreviation_count = 0
+
         for doc in docs:
+            processed_count += 1
             # Check if this is a bacterial species
             lineage = doc.get("lineage", [])
             rank = doc.get("rank", "")
@@ -176,7 +180,12 @@ class BacterialAbbreviationMapper(mapper.BaseMapper):
                 if abbreviated_names:
                     doc["other_names"] = original_names + abbreviated_names
                     taxid = doc.get('taxid')
-                    self.logger.debug(f"Added abbreviations for taxid "
-                                      f"{taxid}: {abbreviated_names}")
+                    abbreviation_count += 1
+                    self.logger.info(f"Added abbreviations for taxid "
+                                     f"{taxid}: {abbreviated_names}")
 
             yield doc
+
+        self.logger.info(f"BacterialAbbreviationMapper processed "
+                         f"{processed_count} docs, added abbreviations to "
+                         f"{abbreviation_count} docs")
