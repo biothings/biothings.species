@@ -98,3 +98,85 @@ class LineageMapper(mapper.BaseMapper):
         for doc in docs:
             doc = self.get_lineage(doc)
             yield doc
+
+
+class BacterialAbbreviationMapper(mapper.BaseMapper):
+    """
+    Mapper to create abbreviations for bacterial scientific names
+    in other_names.
+
+    If lineage contains bacteria (taxid 2) and rank is species-level,
+    abbreviate scientific names to standard format
+    (Genus species -> G. species).
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(BacterialAbbreviationMapper, self).__init__(*args, **kwargs)
+        self.logger = logging.getLogger(__name__)
+
+    def _is_bacterial(self, lineage):
+        """Check if lineage contains bacteria (taxid 2)"""
+        return 2 in lineage if lineage else False
+
+    def _is_species_level(self, rank):
+        """Check if rank is at species level or below"""
+        species_level_ranks = {'species', 'subspecies', 'strain',
+                               'varietas', 'forma'}
+        return rank in species_level_ranks if rank else False
+
+    def _abbreviate_scientific_name(self, name):
+        """
+        Abbreviate scientific name from 'Genus species' to 'G. species'
+        Handles various formats and edge cases.
+        """
+        if not name or not isinstance(name, str):
+            return name
+
+        # Clean and split the name
+        name = name.strip().lower()
+        parts = name.split()
+
+        # Need at least genus and species for abbreviation
+        if len(parts) < 2:
+            return name
+
+        # Abbreviate first part (genus) to first letter + dot
+        genus = parts[0]
+        if len(genus) > 0:
+            abbreviated = genus[0] + '.'
+            # Join with the rest of the name
+            return abbreviated + ' ' + ' '.join(parts[1:])
+
+        return name
+
+    def process(self, docs):
+        for doc in docs:
+            # Check if this is a bacterial species
+            lineage = doc.get("lineage", [])
+            rank = doc.get("rank", "")
+
+            if (self._is_bacterial(lineage) and
+                    self._is_species_level(rank) and
+                    "other_names" in doc):
+
+                # Create abbreviated versions of other_names
+                abbreviated_names = []
+                original_names = doc["other_names"]
+
+                for name in original_names:
+                    abbreviated = self._abbreviate_scientific_name(name)
+                    # Only add if it's different from original
+                    # and not already present
+                    if (abbreviated != name and
+                            abbreviated not in original_names and
+                            abbreviated not in abbreviated_names):
+                        abbreviated_names.append(abbreviated)
+
+                # Add abbreviated names to other_names if any were created
+                if abbreviated_names:
+                    doc["other_names"] = original_names + abbreviated_names
+                    taxid = doc.get('taxid')
+                    self.logger.debug(f"Added abbreviations for taxid "
+                                      f"{taxid}: {abbreviated_names}")
+
+            yield doc
