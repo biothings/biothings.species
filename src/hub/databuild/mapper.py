@@ -100,54 +100,90 @@ class LineageMapper(mapper.BaseMapper):
             yield doc
 
 
-class BacterialAbbreviationMapper(mapper.BaseMapper):
+class ScientificNameAbbreviationMapper(mapper.BaseMapper):
     """
-    Mapper to create abbreviations for bacterial scientific names
-    in other_names.
+    Mapper to create abbreviations for scientific names in other_names.
 
-    If lineage contains bacteria (taxid 2) and rank is species-level,
-    abbreviate scientific names to standard format
-    (Genus species -> G. species).
+    Creates abbreviations based on taxonomic rank:
+    - species: Genus species -> G. species
+    - subspecies: Genus species ssp./subsp. -> G. species ssp./subsp.
+    - strain: Genus species str. -> G. species str.
     """
 
     def __init__(self, *args, **kwargs):
-        super(BacterialAbbreviationMapper, self).__init__(*args, **kwargs)
+        super(ScientificNameAbbreviationMapper, self).__init__(*args, **kwargs)
         self.logger = logging.getLogger(__name__)
 
-    def _is_bacterial(self, lineage):
-        """Check if lineage contains bacteria (taxid 2)"""
-        return 2 in lineage if lineage else False
+    def _is_target_rank(self, rank):
+        """Check if rank is one we want to abbreviate"""
+        target_ranks = {'species', 'subspecies', 'strain'}
+        return rank in target_ranks if rank else False
 
-    def _is_species_level(self, rank):
-        """Check if rank is at species level or below"""
-        species_level_ranks = {'species', 'subspecies', 'strain',
-                               'varietas', 'forma'}
-        return rank in species_level_ranks if rank else False
-
-    def _abbreviate_scientific_name(self, name):
+    def _abbreviate_scientific_name(self, name, rank):
         """
-        Abbreviate scientific name from 'Genus species' to 'G. species'
-        Handles various formats and edge cases.
+        Abbreviate scientific name based on taxonomic rank.
+
+        Args:
+            name: Scientific name to abbreviate
+            rank: Taxonomic rank (species, subspecies, strain)
+
+        Returns:
+            List of abbreviated names
         """
         if not name or not isinstance(name, str):
-            return name
+            return []
 
         # Clean and split the name
-        name = name.strip().lower()
+        name = name.strip()
         parts = name.split()
 
         # Need at least genus and species for abbreviation
         if len(parts) < 2:
-            return name
+            return []
 
         # Abbreviate first part (genus) to first letter + dot
         genus = parts[0]
-        if len(genus) > 0:
-            abbreviated = genus[0] + '.'
-            # Join with the rest of the name
-            return abbreviated + ' ' + ' '.join(parts[1:])
+        if len(genus) == 0:
+            return []
 
-        return name
+        abbreviated_genus = genus[0].upper() + '.'
+        abbreviated_names = []
+
+        if rank == 'species':
+            # For species: G. species
+            if len(parts) >= 2:
+                abbreviated = abbreviated_genus + ' ' + ' '.join(parts[1:])
+                abbreviated_names.append(abbreviated)
+
+        elif rank == 'subspecies':
+            # For subspecies: G. species ssp. {rest} and
+            # G. species subsp. {rest}
+            if len(parts) >= 3:
+                # Find where subspecies designation starts
+                species_part = parts[1]
+                rest_parts = parts[2:]
+
+                # Create both ssp. and subsp. variants
+                rest_joined = ' '.join(rest_parts)
+                ssp_abbrev = (f"{abbreviated_genus} {species_part} "
+                              f"ssp. {rest_joined}")
+                subsp_abbrev = (f"{abbreviated_genus} {species_part} "
+                                f"subsp. {rest_joined}")
+
+                abbreviated_names.extend([ssp_abbrev, subsp_abbrev])
+
+        elif rank == 'strain':
+            # For strain: G. species str. {rest}
+            if len(parts) >= 3:
+                species_part = parts[1]
+                rest_parts = parts[2:]
+
+                rest_joined = ' '.join(rest_parts)
+                str_abbrev = (f"{abbreviated_genus} {species_part} "
+                              f"str. {rest_joined}")
+                abbreviated_names.append(str_abbrev)
+
+        return abbreviated_names
 
     def process(self, docs):
         processed_count = 0
@@ -155,37 +191,37 @@ class BacterialAbbreviationMapper(mapper.BaseMapper):
 
         for doc in docs:
             processed_count += 1
-            # Check if this is a bacterial species
-            lineage = doc.get("lineage", [])
             rank = doc.get("rank", "")
 
-            if (self._is_bacterial(lineage) and
-                    self._is_species_level(rank) and
-                    "other_names" in doc):
+            if (self._is_target_rank(rank) and "other_names" in doc):
 
                 # Create abbreviated versions of other_names
-                abbreviated_names = []
+                all_abbreviated_names = []
                 original_names = doc["other_names"]
 
                 for name in original_names:
-                    abbreviated = self._abbreviate_scientific_name(name)
-                    # Only add if it's different from original
-                    # and not already present
-                    if (abbreviated != name and
-                            abbreviated not in original_names and
-                            abbreviated not in abbreviated_names):
-                        abbreviated_names.append(abbreviated)
+                    abbreviated_list = self._abbreviate_scientific_name(
+                        name, rank)
+
+                    for abbreviated in abbreviated_list:
+                        # Only add if it's different from original
+                        # and not already present
+                        if (abbreviated != name and
+                                abbreviated not in original_names and
+                                abbreviated not in all_abbreviated_names):
+                            all_abbreviated_names.append(abbreviated)
 
                 # Add abbreviated names to other_names if any were created
-                if abbreviated_names:
-                    doc["other_names"] = original_names + abbreviated_names
+                if all_abbreviated_names:
+                    doc["other_names"] = original_names + all_abbreviated_names
                     taxid = doc.get('taxid')
                     abbreviation_count += 1
                     self.logger.info(f"Added abbreviations for taxid "
-                                     f"{taxid}: {abbreviated_names}")
+                                     f"{taxid} (rank: {rank}): "
+                                     f"{all_abbreviated_names}")
 
             yield doc
 
-        self.logger.info(f"BacterialAbbreviationMapper processed "
+        self.logger.info(f"ScientificNameAbbreviationMapper processed "
                          f"{processed_count} docs, added abbreviations to "
                          f"{abbreviation_count} docs")

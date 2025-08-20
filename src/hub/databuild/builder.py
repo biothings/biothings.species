@@ -5,7 +5,7 @@ from biothings.hub.databuild.builder import DataBuilder
 from biothings.hub.dataload.storage import UpsertStorage
 from biothings.utils.mongo import doc_feeder, get_target_db
 
-from .mapper import BacterialAbbreviationMapper, LineageMapper
+from .mapper import LineageMapper, ScientificNameAbbreviationMapper
 
 
 class TaxonomyDataBuilder(DataBuilder):
@@ -17,9 +17,9 @@ class TaxonomyDataBuilder(DataBuilder):
         # as it's not part of an upload process
         lineage_mapper.load()
 
-        # get the bacterial abbreviation mapper
-        bacterial_mapper = BacterialAbbreviationMapper(
-            name="bacterial_abbreviation")
+        # get the scientific name abbreviation mapper
+        scientific_name_mapper = ScientificNameAbbreviationMapper(
+            name="scientific_name_abbreviation")
 
         # create a storage to save docs back to merged collection
         db = get_target_db()
@@ -30,9 +30,9 @@ class TaxonomyDataBuilder(DataBuilder):
                                step=batch_size, inbatch=True):
             # Apply lineage mapper first (adds lineage field)
             docs = lineage_mapper.process(docs)
-            # Then apply bacterial abbreviation mapper
+            # Then apply scientific name abbreviation mapper
             # (depends on lineage field)
-            docs = bacterial_mapper.process(docs)
+            docs = scientific_name_mapper.process(docs)
             storage.process(docs, batch_size)
 
         # add indices used to create metadata stats
