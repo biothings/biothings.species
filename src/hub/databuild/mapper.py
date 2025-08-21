@@ -193,27 +193,36 @@ class ScientificNameAbbreviationMapper(mapper.BaseMapper):
             processed_count += 1
             rank = doc.get("rank", "")
 
-            if (self._is_target_rank(rank) and "other_names" in doc):
-
-                # Create abbreviated versions of other_names
+            if self._is_target_rank(rank):
+                # Get existing other_names or empty list if doesn't exist
+                original_names = doc.get("other_names", [])
                 all_abbreviated_names = []
-                original_names = doc["other_names"]
 
-                for name in original_names:
+                # Always try to abbreviate the scientific_name
+                scientific_name = doc.get("scientific_name", "")
+                if scientific_name:
                     abbreviated_list = self._abbreviate_scientific_name(
-                        name, rank)
+                        scientific_name, rank)
 
                     for abbreviated in abbreviated_list:
-                        # Only add if it's different from original
-                        # and not already present
-                        if (abbreviated != name and
+                        # Only add if it's different from scientific_name
+                        # and not already present in original_names
+                        if (abbreviated != scientific_name and
                                 abbreviated not in original_names and
                                 abbreviated not in all_abbreviated_names):
                             all_abbreviated_names.append(abbreviated)
 
                 # Add abbreviated names to other_names if any were created
                 if all_abbreviated_names:
-                    doc["other_names"] = original_names + all_abbreviated_names
+                    # Only update other_names if we have new abbreviations
+                    if original_names:
+                        # Preserve existing other_names and add abbreviations
+                        doc["other_names"] = (original_names +
+                                              all_abbreviated_names)
+                    else:
+                        # Create new other_names with just the abbreviations
+                        doc["other_names"] = all_abbreviated_names
+
                     taxid = doc.get('taxid')
                     abbreviation_count += 1
                     self.logger.info(f"Added abbreviations for taxid "
