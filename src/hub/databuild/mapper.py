@@ -150,21 +150,28 @@ class ScientificNameAbbreviationMapper(mapper.BaseMapper):
         abbreviated_names = []
 
         if rank == 'species':
+            # For species: skip if "sp." exists in the scientific name
+            if 'sp.' in name:
+                return []
             # For species: G. species
             if len(parts) >= 2:
                 abbreviated = abbreviated_genus + ' ' + ' '.join(parts[1:])
                 abbreviated_names.append(abbreviated)
 
         elif rank == 'subspecies':
-            # For subspecies: G. species ssp. {rest} and
-            # G. species subsp. {rest}
+            # For subspecies: G. species ssp. {rest} and G. species subsp.
             if len(parts) >= 3:
-                # Find where subspecies designation starts
                 species_part = parts[1]
                 rest_parts = parts[2:]
 
+                # Remove existing ssp. or subsp. if present
+                rest_parts_clean = []
+                for part in rest_parts:
+                    if part not in ['ssp.', 'subsp.']:
+                        rest_parts_clean.append(part)
+
                 # Create both ssp. and subsp. variants
-                rest_joined = ' '.join(rest_parts)
+                rest_joined = ' '.join(rest_parts_clean)
                 ssp_abbrev = (f"{abbreviated_genus} {species_part} "
                               f"ssp. {rest_joined}")
                 subsp_abbrev = (f"{abbreviated_genus} {species_part} "
@@ -173,14 +180,23 @@ class ScientificNameAbbreviationMapper(mapper.BaseMapper):
                 abbreviated_names.extend([ssp_abbrev, subsp_abbrev])
 
         elif rank == 'strain':
-            # For strain: G. species str. {rest}
+            # For strain: if has 'str. ' do G. species abbreviation, keep rest
             if len(parts) >= 3:
                 species_part = parts[1]
                 rest_parts = parts[2:]
 
-                rest_joined = ' '.join(rest_parts)
+                # If str. is already present, keep everything after it
+                if 'str.' in rest_parts:
+                    str_index = rest_parts.index('str.')
+                    # Keep str. and everything after it
+                    rest_parts_to_keep = rest_parts[str_index:]
+                else:
+                    # Add str. prefix to the rest
+                    rest_parts_to_keep = ['str.'] + rest_parts
+
+                rest_joined = ' '.join(rest_parts_to_keep)
                 str_abbrev = (f"{abbreviated_genus} {species_part} "
-                              f"str. {rest_joined}")
+                              f"{rest_joined}")
                 abbreviated_names.append(str_abbrev)
 
         return abbreviated_names
