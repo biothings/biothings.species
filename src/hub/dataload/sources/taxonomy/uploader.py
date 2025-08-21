@@ -29,8 +29,7 @@ class TaxonomyNodesUploader(uploader.BaseSourceUploader):
                 "type": "long"
             },
             "other_names": {
-                "type": "text",
-                "copy_to": ["all"]
+                "type": "text"
             },
         }
 
