@@ -51,29 +51,38 @@ class TaxonomyNamesUploader(uploader.BaseSourceUploader):
                 "copy_to": ["all"],
                 "type": "text",
                 "fields": {
-                        "raw": {
-                            "type": "keyword",
-                            "normalizer": "keyword_lowercase_normalizer"
-                        }
+                    "raw": {
+                        "type": "keyword",
+                        "normalizer": "keyword_lowercase_normalizer"
+                    },
+                    "raw2": {
+                        "type": "keyword"
+                    }
                 }
             },
             "common_name": {
                 "copy_to": ["all"],
                 "type": "text",
                 "fields": {
-                        "raw": {
-                            "type": "keyword",
-                            "normalizer": "keyword_lowercase_normalizer"
-                        }
+                    "raw": {
+                        "type": "keyword",
+                        "normalizer": "keyword_lowercase_normalizer"
+                    },
+                    "raw2": {
+                        "type": "keyword"
+                    }
                 }
             },
             "genbank_common_name": {
                 "type": "text",
                 "fields": {
-                        "raw": {
-                            "type": "keyword",
-                            "normalizer": "keyword_lowercase_normalizer"
-                        }
+                    "raw": {
+                        "type": "keyword",
+                        "normalizer": "keyword_lowercase_normalizer"
+                    },
+                    "raw2": {
+                        "type": "keyword"
+                    }
                 }
             }
         }
