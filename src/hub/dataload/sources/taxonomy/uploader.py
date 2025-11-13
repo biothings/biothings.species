@@ -52,13 +52,40 @@ class TaxonomyNamesUploader(uploader.BaseSourceUploader):
         return {
             "scientific_name": {
                 "copy_to": ["all"],
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "raw": {
+                        "type": "keyword",
+                        "normalizer": "keyword_lowercase_normalizer"
+                    },
+                    "raw2": {
+                        "type": "keyword"
+                    }
+                }
             },
             "common_name": {
                 "copy_to": ["all"],
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "raw": {
+                        "type": "keyword",
+                        "normalizer": "keyword_lowercase_normalizer"
+                    },
+                    "raw2": {
+                        "type": "keyword"
+                    }
+                }
             },
             "genbank_common_name": {
-                "type": "text"
+                "type": "text",
+                "fields": {
+                    "raw": {
+                        "type": "keyword",
+                        "normalizer": "keyword_lowercase_normalizer"
+                    },
+                    "raw2": {
+                        "type": "keyword"
+                    }
+                }
             }
         }
