@@ -51,7 +51,7 @@ class TaxonomyNamesUploader(uploader.BaseSourceUploader):
                 "copy_to": ["all"],
                 "type": "text",
                 "fields": {
-                        "keyword": {
+                        "raw": {
                             "type": "keyword",
                             "normalizer": "keyword_lowercase_normalizer"
                         }
@@ -61,7 +61,7 @@ class TaxonomyNamesUploader(uploader.BaseSourceUploader):
                 "copy_to": ["all"],
                 "type": "text",
                 "fields": {
-                        "keyword": {
+                        "raw": {
                             "type": "keyword",
                             "normalizer": "keyword_lowercase_normalizer"
                         }
@@ -70,7 +70,7 @@ class TaxonomyNamesUploader(uploader.BaseSourceUploader):
             "genbank_common_name": {
                 "type": "text",
                 "fields": {
-                        "keyword": {
+                        "raw": {
                             "type": "keyword",
                             "normalizer": "keyword_lowercase_normalizer"
                         }
