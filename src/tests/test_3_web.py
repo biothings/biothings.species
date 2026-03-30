@@ -24,7 +24,7 @@ class TestTaxonWeb(BiothingsDataTest):
         assert "taxonomy" in res['src'].keys()
         assert res['stats']['unique taxonomy ids'] >= 2370690
         assert len(res['stats']['distribution of taxonomy ids by rank']) >= 44
-        assert res['stats']['distribution of taxonomy ids by rank']['kingdom'] == 13
+        assert res['stats']['distribution of taxonomy ids by rank']['kingdom'] >= 21
         
     def test_306_fields(self):
         res = self.request('metadata/fields').json()

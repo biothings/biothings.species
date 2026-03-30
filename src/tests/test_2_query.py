@@ -1,4 +1,5 @@
 from operator import contains
+
 from biothings.tests.web import BiothingsDataTest
 
 """
@@ -38,7 +39,7 @@ class TestQueryPOST(BiothingsDataTest):
         data = {'q': '9606', 'scopes': 'taxid'}
         res = self.request('query', method='POST', data=data).json()
         assert len(res) == 1
-        assert set(res[0].keys()) == set(['query', '_id', '_score', 'authority', 'genbank_common_name', 'has_gene', 'lineage', 'parent_taxid', 'rank', 'scientific_name', 'taxid', 'uniprot_name'])
+        assert set(res[0].keys()) == set(['query', '_id', '_score', 'authority', 'genbank_common_name', 'has_gene', 'lineage', 'parent_taxid', 'rank', 'scientific_name', 'taxid', 'uniprot_name, other_names'])
 
     def test_202_post(self):
         data = {'q': 'homo sapiens', 'scopes': 'scientific_name'}

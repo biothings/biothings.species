@@ -28,6 +28,9 @@ class TaxonomyNodesUploader(uploader.BaseSourceUploader):
             "parent_taxid": {
                 "type": "long"
             },
+            "other_names": {
+                "type": "text"
+            },
         }
 
 
