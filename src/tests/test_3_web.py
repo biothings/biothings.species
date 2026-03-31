@@ -1,7 +1,7 @@
 from biothings.tests.web import BiothingsDataTest
 
 class TestTaxonWeb(BiothingsDataTest):
-    host = 't.biothings.io'
+    host = 'mytaxon.info'
     prefix = 'v1'
 
     def test_301_status(self):

@@ -1,6 +1,6 @@
 """
     MyTaxon
-    http://t.biothings.io/
+    http://mytaxon.info/
 """
 
 from copy import deepcopy
