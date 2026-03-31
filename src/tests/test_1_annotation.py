@@ -18,7 +18,7 @@ ids=9605,9606&fields=has_gene,scientific_name,lineage
 """
 
 class TestAnnotationGET(BiothingsDataTest):
-    host = 't.biothings.io'
+    host = 'mytaxon.info'
     prefix = 'v1'
 
     def test_101(self):
@@ -126,7 +126,7 @@ class TestAnnotationGET(BiothingsDataTest):
         self.request('taxon/', expect=400)
 
 class TestAnnotationPOST(BiothingsDataTest):
-    host = 't.biothings.io'
+    host = 'mytaxon.info'
     prefix = 'v1'
 
     def test_109(self):

@@ -1,7 +1,7 @@
 {
     "endpoints": [
         {
-            "name": "t.biothings.io taxonomy query service",
+            "name": "mytaxon.info taxonomy query service",
             "methods": [
                 {
                     "MethodName": "Taxon query service",
@@ -19,7 +19,7 @@
                         {
                             "Name": "fields",
                             "Type": "string",
-                            "Description": "a comma-separated list of fields used to limit the fields returned from matching query hits. The supported field names can be found at http://t.biothings.io/metadata/fields.  Note that it supports dot notation, and wildcards as well. Default: \"all\"."
+                            "Description": "a comma-separated list of fields used to limit the fields returned from matching query hits. The supported field names can be found at http://mytaxon.info/metadata/fields.  Note that it supports dot notation, and wildcards as well. Default: \"all\"."
                         },
                         {
                             "Name": "size",
@@ -81,12 +81,12 @@
                             "Name": "scopes",
                             "Type": "string",
                             "Required": "Y",
-                            "Description": "specify one or more fields (separated by comma) as the search \"scopes\", e.g., \"scopes=scientific_name\". The available \"fields\" that can be passed to \"scopes\" parameter are listed here: http://t.biothings.io/metadata/fields"
+                            "Description": "specify one or more fields (separated by comma) as the search \"scopes\", e.g., \"scopes=scientific_name\". The available \"fields\" that can be passed to \"scopes\" parameter are listed here: http://mytaxon.info/metadata/fields"
                         },
                         {
                             "Name": "fields",
                             "Type": "string",
-                            "Description": "a comma-separated fields to limit the fields returned from the matching gene hits. The supported field names can be found from http://t.biothings.io/metadata/fields Note that it supports dot notation, and wildcards as well.  If \"fields=all\", all available fields will be returned. Default: \"all\"."
+                            "Description": "a comma-separated fields to limit the fields returned from the matching gene hits. The supported field names can be found from http://mytaxon.info/metadata/fields Note that it supports dot notation, and wildcards as well.  If \"fields=all\", all available fields will be returned. Default: \"all\"."
                         },
                         {
                             "Name": "email",
@@ -99,7 +99,7 @@
         },
 
         {
-            "name": "t.biothings.io taxonomy annotation services",
+            "name": "mytaxon.info taxonomy annotation services",
             "methods": [
                 {
                     "MethodName": "Taxonomy annotation service",
@@ -117,7 +117,7 @@
                         {
                             "Name": "fields",
                             "Type": "string",
-                            "Description": "a comma-separated fields to limit the fields returned from the matching hits. The supported field names can be found here http://t.biothings.io/metadata/fields  Note that it supports dot notation, and wildcards as well.  If \"fields=all\", all available fields will be returned. Default: \"all\"."
+                            "Description": "a comma-separated fields to limit the fields returned from the matching hits. The supported field names can be found here http://mytaxon.info/metadata/fields  Note that it supports dot notation, and wildcards as well.  If \"fields=all\", all available fields will be returned. Default: \"all\"."
                         },
                         {
                             "Name": "callback",
@@ -148,7 +148,7 @@
                         {
                             "Name": "fields",
                             "Type": "string",
-                            "Description": "a comma-separated fields to limit the fields returned from the matching hits. The supported field names can be found from here: http://t.biothings.io/metadata/fields  Note that it supports dot notation, and wildcards as well. If \"fields=all\", all available fields will be returned. Default: \"all\"."
+                            "Description": "a comma-separated fields to limit the fields returned from the matching hits. The supported field names can be found from here: http://mytaxon.info/metadata/fields  Note that it supports dot notation, and wildcards as well. If \"fields=all\", all available fields will be returned. Default: \"all\"."
                         },
                         {
                             "Name": "email",
@@ -162,11 +162,11 @@
         },
 
         {
-            "name": "t.biothings.io metadata service",
+            "name": "mytaxon.info metadata service",
             "methods": [
                 {
                     "MethodName": "Metadata service",
-                    "Synopsis": "Get metadata about the data available from t.biothings.io",
+                    "Synopsis": "Get metadata about the data available from mytaxon.info",
                     "HTTPMethod": "GET",
                     "URI": "/v1/metadata",
                     "parameters": [
@@ -179,7 +179,7 @@
                 },
                 {
                     "MethodName": "Available fields service",
-                    "Synopsis": "Get list of available fields in t.biothings.io",
+                    "Synopsis": "Get list of available fields in mytaxon.info",
                     "HTTPMethod": "GET",
                     "URI": "/v1/metadata/fields",
                     "parameters": [

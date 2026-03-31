@@ -14,7 +14,7 @@ q=homo sapiens&scopes=scientific_name
 """
 
 class TestQueryGET(BiothingsDataTest):
-    host = 't.biothings.io'
+    host = 'mytaxon.info'
     prefix = 'v1'
 
     def test_201(self):
@@ -32,7 +32,7 @@ class TestQueryGET(BiothingsDataTest):
         assert len(res['hits']) >= 3
 
 class TestQueryPOST(BiothingsDataTest):
-    host = 't.biothings.io'
+    host = 'mytaxon.info'
     prefix = 'v1'
 
     def test_201_post(self):
