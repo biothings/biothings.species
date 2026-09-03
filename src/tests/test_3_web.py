@@ -1,3 +1,4 @@
+import pytest
 from biothings.tests.web import BiothingsDataTest
 
 class TestTaxonWeb(BiothingsDataTest):
@@ -10,9 +11,11 @@ class TestTaxonWeb(BiothingsDataTest):
     def test_302_status(self):
         self.request('/status', method='HEAD')
 
+    @pytest.mark.production
     def test_303_static(self):
         self.request('/favicon.ico')
 
+    @pytest.mark.production
     def test_304_static(self):
         self.request('/robots.txt')
 
