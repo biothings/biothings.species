@@ -1,0 +1,4 @@
+[tool.pytest.ini_options]
+markers = [
+    "production: only passes against the deployed site, where nginx serves static/",
+]
