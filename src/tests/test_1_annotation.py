@@ -26,7 +26,7 @@ class TestAnnotationGET(BiothingsDataTest):
         taxon = {
                     "_id": "9606",
                     "authority": [
-                    "homo sapiens linnaeus, 1758"
+                    "Homo sapiens Linnaeus, 1758"
                     ],
                     "genbank_common_name": "human",
                     "has_gene": True,
@@ -39,7 +39,7 @@ class TestAnnotationGET(BiothingsDataTest):
                     ],
                     "parent_taxid": 9605,
                     "rank": "species",
-                    "scientific_name": "homo sapiens",
+                    "scientific_name": "Homo sapiens",
                     "taxid": 9606,
                     "uniprot_name": "homo sapiens"
                 }
@@ -51,7 +51,7 @@ class TestAnnotationGET(BiothingsDataTest):
         taxon = {
             "_id": "9606",
             "has_gene": True,
-            "scientific_name": "homo sapiens",
+            "scientific_name": "Homo sapiens",
             "taxid": 9606,
         }
         # Is taxon a subset of res?
@@ -74,16 +74,16 @@ class TestAnnotationGET(BiothingsDataTest):
                         'scientific_name', 'taxid', 'type material', 'uniprot_name'])
 
         assert res_taxon['_id'] == "63221"
-        assert "homo sapiens neanderthalensis king, 1864" in res_taxon['authority']
-        assert tuple(["neandertal man","neanderthal","neanderthal man"]) == tuple(res_taxon['common_name'])
-        assert res_taxon['genbank_common_name'] == "neandertal"
+        assert "Homo sapiens neanderthalensis King, 1864" in res_taxon['authority']
+        assert tuple(["Neandertal man","Neanderthal","Neanderthal man"]) == tuple(res_taxon['common_name'])
+        assert res_taxon['genbank_common_name'] == "Neandertal"
         assert res_taxon['has_gene'] == True
-        assert "homo neanderthalensis" in res_taxon['other_names']
+        assert "Homo neanderthalensis" in res_taxon['other_names']
         assert res_taxon['parent_taxid'] == 9606
         assert res_taxon['rank'] == "subspecies"
-        assert res_taxon['scientific_name'] == "homo sapiens neanderthalensis"
+        assert res_taxon['scientific_name'] == "Homo sapiens neanderthalensis"
         assert res_taxon['taxid'] == 63221
-        assert tuple(['feldhofer 1','neanderthal 1']) == tuple(res_taxon['type material'])
+        assert tuple(['Feldhofer 1','Neanderthal 1']) == tuple(res_taxon['type material'])
         assert res_taxon['uniprot_name'] == "homo sapiens neanderthalensis"
 
         lineages = [
